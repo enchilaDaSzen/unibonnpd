@@ -3,7 +3,7 @@
 """
 Created on Tue Mar 11 19:48:03 2025
 
-@author: enchiladaszen
+@author: dsanchez
 """
 
 from scipy.stats import norm
@@ -26,7 +26,7 @@ rcomp = 'rcomp_qpe_dwdxpol'
 
 WDIR = EWDIR + f'pd_rdres/qpe_all/{rcomp}/rcoeffs/'
 
-SAVE_FIGS = True
+SAVE_FIGS = False
 
 RQPE_FILES = [WDIR + i for i in sorted(os.listdir(WDIR))]
 
@@ -107,7 +107,7 @@ for rb in rbands:
     ax.set_xlim((0, 350) if rb == 'C' else (0, 160))
     ax.set_xlabel('Coeff a', fontsize=14)
     ax.set_ylabel('Count', fontsize=14)
-    ax.set_title('$R(Z_H)(opt) -> Z_H=aR^b [a = opt,'
+    ax.set_title('$R(Z_H)[opt] -> Z_H=aR^b [a = opt,'
                  + f' b={1.6 if rb == "C" else 2.14}]$', fontsize=14)
     ax.tick_params(axis='both', which='major', labelsize=12)
     ax = axs[1]
@@ -127,7 +127,7 @@ for rb in rbands:
     ax.set_xlabel('Coeff a', fontsize=14)
     ax.set_ylabel('Count', fontsize=14)
     sns.move_legend(ax, 'upper right', fontsize=12)
-    ax.set_title('$R(K_{DP})(opt) -> R=aK_{DP}^b [a = opt,'
+    ax.set_title('$R(K_{DP})[opt] -> R=aK_{DP}^b [a = opt,'
                  + f' b={0.80 if rb == "X" else "opt"}]$', fontsize=14)
     ax.tick_params(axis='both', which='major', labelsize=12)
     fig.suptitle(f'{rb}-band radars', fontsize=16)
@@ -140,28 +140,28 @@ for rb in rbands:
         else:
             sfx = 'x'
         fname = (f"rzhkdpopt{sfx}_{len_rdtsets}_devents.png")
-        plt.savefig(RES_DIR2 + fname, dpi=800, format='png')
+        plt.savefig(RES_DIR2 + fname, dpi=200, format='png')
 # %%
 
 # for k1, v1 in coeffs_rs.items():
 #     fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 #     if 'xpol' in k1:
-#         axs[0].set_title('$R(Z_H)(opt) -> Z_H=aR^b [a = opt, b=2.14]$')
+#         axs[0].set_title('$R(Z_H)[opt] -> Z_H=aR^b [a = opt, b=2.14]$')
 #         axs[0].hist(v1['r_zopt_a'], bins_zh_x, histtype='step', density=False)
 #         # y = norm.pdf(bins_zh_x, np.mean(v1[0]),
 #         #              np.nanstd(v1[0], axis=-1, ddof=1))
 #         # axs[0].plot(bins_zh_x, y, 'r--')
 #     else:
-#         axs[0].set_title('$R(Z_H)(opt) -> Z_H=aR^b [a = opt, b=1.6]$')
+#         axs[0].set_title('$R(Z_H)[opt] -> Z_H=aR^b [a = opt, b=1.6]$')
 #         axs[0].hist(v1['r_zopt_a'], bins_zh_c, histtype='step')
 #     if 'xpol' in k1:
 #         axs[1].hist(v1['r_kdpopt_a'], bins_kdp_x, histtype='step')
 #         axs[1].set_title('step')
-#         axs[1].set_title('$R(K_{DP})(opt) -> R=aK_{DP}^b [a = opt, b=0.80]$')
+#         axs[1].set_title('$R(K_{DP})[opt] -> R=aK_{DP}^b [a = opt, b=0.80]$')
 #     else:
 #         axs[1].hist(v1['r_kdpopt_a'], bins_kdp_c, histtype='step')
 #         axs[1].set_title('step')
-#         axs[1].set_title('$R(K_{DP})(opt) -> R=aK_{DP}^b [a = opt, b=opt]$')
+#         axs[1].set_title('$R(K_{DP})[opt] -> R=aK_{DP}^b [a = opt, b=opt]$')
 #     # axs[0, 0].hist(v1[0], bins, density=False, histtype='stepfilled',
 #     #                facecolor='g', alpha=0.75)
 #     axs[0].set_ylabel('Frequency')
@@ -177,7 +177,7 @@ for rb in rbands:
 # rband = 'X'
 # for k1, v1 in coeffs_rs.items():
 #     if v1['rband'] == rband:
-#         axs[0].set_title('$R(Z_H)(opt) -> Z_H=aR^b [a = opt, b=2.14]$')
+#         axs[0].set_title('$R(Z_H)[opt] -> Z_H=aR^b [a = opt, b=2.14]$')
 #         axs[0].hist(np.hstack([v1['r_zopt_a']
 #                                for k1, v1 in coeffs_rs.items()
 #                                if v1['rband'] == rband]),
@@ -205,7 +205,7 @@ for rb in rbands:
 #         axs[1].hist(v1['r_kdpopt_a'], bins_kdp_x, histtype='step',
 #                     density=False, label=k1, ls='-')
 #         axs[1].set_title('step')
-#         axs[1].set_title('$R(K_{DP})(opt) -> R=aK_{DP}^b [a = opt, b=0.80]$')
+#         axs[1].set_title('$R(K_{DP})[opt] -> R=aK_{DP}^b [a = opt, b=0.80]$')
 #         axs[1].legend()
 #         axs[1].set_xlabel('Coeff a')
 #         # axs[1].grid()
@@ -240,7 +240,7 @@ for rb in rbands:
 # ax.set_axisbelow(True) 
 # ax.set_xlim((0, 175))
 # ax.set_xlabel('Coeff a')
-# ax.set_title('$R(Z_H)(opt) -> Z_H=aR^b [a = opt, b=2.14]$')
+# ax.set_title('$R(Z_H)[opt] -> Z_H=aR^b [a = opt, b=2.14]$')
 
 # ax = axs[1]
 # sns.histplot(x=np.hstack([v1['r_kdpopt_a'] for k1, v1 in coeffs_rs.items()
@@ -253,7 +253,7 @@ for rb in rbands:
 #              palette="vlag", edgecolor=".3", linewidth=.5, ax=ax)
 # ax.set_xlim((0, 25))
 # ax.set_xlabel('Coeff a')
-# ax.set_title('$R(K_{DP})(opt) -> R=aK_{DP}^b [a = opt, b=opt]$')
+# ax.set_title('$R(K_{DP})[opt] -> R=aK_{DP}^b [a = opt, b=opt]$')
 # ax.grid(axis='y', which='both')
 # ax.set_axisbelow(True) 
 # fig.suptitle(f'{rband}-band radars')
@@ -265,8 +265,8 @@ for rb in rbands:
 # rband = 'C'
 
 # fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-# axs[0].set_title('$R(Z_H)(opt) -> Z_H=aR^b [a = opt, b=1.6]$')
-# axs[1].set_title('$R(K_{DP})(opt) -> R=aK_{DP}^b [a = opt, b=opt]$')
+# axs[0].set_title('$R(Z_H)[opt] -> Z_H=aR^b [a = opt, b=1.6]$')
+# axs[1].set_title('$R(K_{DP})[opt] -> R=aK_{DP}^b [a = opt, b=opt]$')
 
 # # xpdf = np.hstack([v1['r_zopt_a'] for k1, v1 in coeffs_rs.items()
 # #                   if v1['rband'] == rband])

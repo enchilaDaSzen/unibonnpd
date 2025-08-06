@@ -19,12 +19,15 @@ from radar import twpext as tpx
 # Define working directory and list files
 # =============================================================================
 RSITE = 'chenies'
+RSITE = 'hameldon-hill'  # LDR
 MODER = 'zdr'  # zdr or ldr
 MODEP = 'lp'  # sp or lp
 ELEV = 0
-START_TIME = dt.datetime(2020, 10, 3, 7, 25)
+START_TIME = dt.datetime(2020, 10, 3, 7, 21)
 # START_TIME = dt.datetime(2020, 10, 3, 3, 31)
 # START_TIME = dt.datetime(2022, 11, 17, 0, 5)
+START_TIME = dt.datetime(2019, 7, 31, 0, 28)  # LDR
+START_TIME = dt.datetime(2019, 7, 31, 0, 25)
 
 EWDIR = ('/media/enchiladaszen/Samsung1TB/safe/radar_datasets/'
          f'ukmo-nimrod/data/single-site/{START_TIME.year}/{RSITE}/'
@@ -40,17 +43,30 @@ PLOT_METHODS = False
 # Reads polar radar data
 # =============================================================================
 rdata = tp.io.ukmo.Rad_scan(FRADNAME, RSITE)
-rdata.ppi_ukmoraw(exclude_vars=['W [m/s]', 'SQI [-]', 'CI [dB]'])
+rdata.ppi_ukmoraw(exclude_vars=['Absphase_V [ ]', 'W [m/s]'])
 rdata.ppi_ukmogeoref()
 
 tp.datavis.rad_display.plot_setppi(rdata.georef, rdata.params, rdata.vars)
+# %%
+
+
+tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rdata.vars,
+                                # var2plot='ZH [dBZ]',
+                                # var2plot='PhiDP [deg]',
+                                # var2plot='ZDR [dB]',
+                                # var2plot='rhoHV [-]',
+                                # var2plot='SQI [-]',
+                                var2plot='CI [dB]',
+                                ucmap='tpylsc_div_dbu_rd',
+                                vars_bounds={'CI [dB]': [-0, 10, 11]}
+                                )
 
 # %%
 # =============================================================================
 # rhoHV noise correction
 # =============================================================================
 rcrho = tpx.rhoHV_Noise_Bias(rdata)
-rhohv_theo = (0.92, 1.1) if MODEP == 'lp' else (0.95, 1.1)
+rhohv_theo = (0.95, 1.) if MODEP == 'lp' else (0.95, 1.1)
 rcrho.iterate_radcst(rdata.georef, rdata.params, rdata.vars,
                      rhohv_theo=rhohv_theo, data2correct=rdata.vars,
                      # noise_lvl=(39, 42, .1),
@@ -75,7 +91,7 @@ if MODEP == 'sp':
     min_snr *= 2
 print(f"minSNR = {min_snr:.2f} dB")
 rsnr.signalnoiseratio(rdata.georef, rdata.params, rcrho.vars, min_snr=min_snr,
-                      data2correct=rcrho.vars, plot_method=True)
+                      data2correct=rcrho.vars, plot_method=PLOT_METHODS)
 
 if PLOT_METHODS:
     tp.datavis.rad_display.plot_setppi(rdata.georef, rdata.params,
@@ -123,6 +139,8 @@ elif MODEP == 'lp':
         clmapf = np.loadtxt('/home/enchiladaszen/Documents/sciebo/codes/'
                             + 'github/towerpy/towerpy/eclass/ukmo_cmaps/'
                             + 'chenies/chenies_cluttermap_el0.dat')
+    else:
+        clmapf = None
 if PLOT_METHODS:
     tp.datavis.rad_display.plot_mfs(
         '/home/enchiladaszen/Documents/sciebo/'
@@ -218,7 +236,7 @@ rattc.vars['ZH+ [dBZ]'] = np.array(
 if PLOT_METHODS:
     tp.datavis.rad_display.plot_ppidiff(
         rdata.georef, rdata.params, rattc.vars, rattc.vars,
-        var2plot1='ZH [dBZ]', var2plot2='ZH* [dBZ]')
+        var2plot1='ZH [dBZ]', var2plot2='ZH+ [dBZ]')
 # %%
 # =============================================================================
 # ZDR Attenuation Correction
@@ -273,7 +291,7 @@ if PLOT_METHODS:
     tp.datavis.rad_display.plot_ppidiff(
         rdata.georef, rdata.params, rattc.vars, rattc.vars,
         var2plot1='KDP* [deg/km]', var2plot2='KDP+ [deg/km]',
-        diff_lims=[-1, 1, .25], vars_bounds={'KDP [deg/km]': (-1, 3, 17)})
+        diff_lims=[-1, 1, .25], vars_bounds={'KDP [deg/km]': (-.5, 1.5, 17)})
 
 # %%
 # =============================================================================
@@ -420,29 +438,57 @@ del rd_qcatc.vars['KDP* [deg/km]']
 rd_qcatc.vars['rhoHV [-]'] = rozdr.vars['rhoHV [-]']
 
 rd_qcatc.vars['Rainfall [mm/h]'] = rqpe.r_z_opt['Rainfall [mm/h]']
-
-if PLOT_METHODS:
-    tp.datavis.rad_display.plot_setppi(rd_qcatc.georef, rd_qcatc.params,
-                                       rd_qcatc.vars, mlyr=rmlyr)
-
-
+    
 # %%
 # =============================================================================
 # Plots
 # =============================================================================
-if PLOT_METHODS:
+# if PLOT_METHODS:
     # Plot cone coverage
-    tp.datavis.rad_display.plot_cone_coverage(rdata.georef, rdata.params,
-                                              rmlyr.mlyr_limits, limh=12,
+tp.datavis.rad_display.plot_cone_coverage(rdata.georef, rdata.params,
+                                              rdata.vars,
+                                              limh=12,
                                               zlims=[0, 12],
-                                              cbticks=rmlyr.regionID,
-                                              ucmap='tpylc_div_yw_gy_bu')
+                                              var2plot='ZDR [dB]'
+                                              # cbticks=rmlyr.regionID,
+                                              # ucmap='tpylc_div_yw_gy_bu'
+                                              )
 
 # %%
+
+tp.datavis.rad_display.plot_setppi(rd_qcatc.georef, rd_qcatc.params,
+                                   rd_qcatc.vars, mlyr=rmlyr)
+
+# %%
+
+
+tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params,
+                                rdata.vars,
+                                # rd_qcatc.vars,
+                                var2plot='SQI [-]'
+                                )
+# %%
+
+
 tp.datavis.rad_interactive.ppi_base(rdata.georef, rdata.params,
-                                    rdata.vars,  # proj='polar',
-                                    var2plot='PhiDP [deg]', mlyr=rmlyr)
+                                    rd_qcatc.vars,  # proj='polar',
+                                    # rdata.vars,
+                                    # var2plot='PhiDP [deg]',
+                                    # var2plot='SQI [-]',
+                                    # var2plot='LDR [dB]',
+                                    # var2plot='AH [dB/km]',
+                                    # var2plot='PIA [dB]',
+                                    # var2plot='KDP [deg/km]',
+                                    # var2plot='ZDR [dB]',
+                                    # var2plot='ADP [dB/km]',
+                                    # var2plot='rhoHV [-]',
+                                    var2plot='Rainfall [mm/h]',
+                                    # vars_bounds={'Rainfall [mm/h]': [-0, 15, 16]},
+                                    # ucmap='binary'
+                                    # mlyr=rmlyr
+                                    )
 ppiexplorer = tp.datavis.rad_interactive.PPI_Int()
+
 
 # %%
 

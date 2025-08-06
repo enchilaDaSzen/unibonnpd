@@ -14,6 +14,7 @@ import wradlib as wrl
 from wradlib.dp import phidp_kdp_vulpiani as kdpvpi
 import cartopy.crs as ccrs
 from radar import twpext as tpx
+from radar.rparams_dwdxpol import RPARAMS
 
 # =============================================================================
 # Define working directory and list files
@@ -71,11 +72,10 @@ tp.datavis.rad_display.plot_setppi(rdata.georef, rdata.params, rdata.vars)
 # rhoHV noise-correction
 # =============================================================================
 rcrho = tpx.rhoHV_Noise_Bias(rdata)
-
-rhohv_theo, noise_lvl = (0.93, 1.1), None
-rcrho.iterate_radcst(
-    rdata.georef, rdata.params, rdata.vars, noise_lvl=noise_lvl,
-    rhohv_theo=rhohv_theo, data2correct=rdata.vars, plot_method=PLOT_METHODS)
+# rhohv_theo, noise_lvl = (0.93, 1.1), None
+rcrho.iterate_radcst(rdata.georef, rdata.params, rdata.vars, noise_lvl=None,
+                     rhohv_theo=RPARAMS[rcrho.site_name]['rhvtc'],
+                     data2correct=rdata.vars, plot_method=PLOT_METHODS)
 
 if PLOT_METHODS:
     tp.datavis.rad_display.plot_ppidiff(
@@ -106,13 +106,14 @@ if PLOT_METHODS:
 # PhiDP quality control and processing
 # =============================================================================
 ropdp = tp.calib.calib_phidp.PhiDP_Calibration(rdata)
-ropdp.offsetdetection_ppi(rsnr.vars)
+presetphidp = RPARAMS[ropdp.site_name]['phidp_prst'].get(
+    START_TIME.strftime("%Y%m%d"))
+ropdp.offsetdetection_ppi(rsnr.vars, preset=presetphidp)
 print(f'Phi_DP(0) = {ropdp.phidp_offset:.2f}')
 # ropdp.phidp_offset = 84
-
-ropdp.offset_correction(rsnr.vars['PhiDP [deg]'],
-                        phidp_offset=ropdp.phidp_offset,
-                        data2correct=rsnr.vars)
+ropdp.offset_correction(
+    rsnr.vars['PhiDP [deg]'], phidp_offset=ropdp.phidp_offset,
+    data2correct=rsnr.vars)
 
 if PLOT_METHODS:
     tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rsnr.vars,
@@ -131,18 +132,21 @@ if PLOT_METHODS:
 
 # %%
 # =============================================================================
-# Clutter identification and removal
+# Non-meteorological echoes identification and removal
 # =============================================================================
 rnme = tp.eclass.nme.NME_ID(rdata)
+# Despeckle and removal of linear signatures
 rnme.lsinterference_filter(rdata.georef, rdata.params, ropdp.vars,
                            rhv_min=0.3, data2correct=ropdp.vars,
                            plot_method=PLOT_METHODS)
-rnme.clutter_id(rdata.georef, rdata.params, rnme.vars, binary_class=205,
-                min_snr=rsnr.min_snr, path_mfs=MFS_DIR,
-                clmap=np.loadtxt(CLM_DIR+f'{RADAR_SITE.lower()}'
-                                 + f'{rdata.scandatetime.year}'
-                                 + '_cluttermap_el0.dat'),
-                data2correct=rnme.vars, plot_method=PLOT_METHODS)
+# Clutter ID and removal
+# clbclass = 205
+clmap = np.loadtxt(CLM_DIR+f'{RADAR_SITE.lower()}'
+                   + f'{rdata.scandatetime.year}_cluttermap_el0.dat')
+rnme.clutter_id(rdata.georef, rdata.params, rnme.vars, min_snr=rsnr.min_snr,
+                path_mfs=MFS_DIR, clmap=clmap, data2correct=rnme.vars,
+                binary_class=RPARAMS[rnme.site_name]['bclass'],
+                plot_method=PLOT_METHODS)
 
 if PLOT_METHODS:
     tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rnme.vars)
@@ -211,7 +215,7 @@ rzhah.ah_zh(rattc.vars, rband='X', zh_lower_lim=20, zh_upper_lim=55, temp=temp,
             copy_ofr=True, plot_method=PLOT_METHODS)
 rattc.vars['ZH* [dBZ]'] = rzhah.vars['ZH [dBZ]']
 
-mov_avrgf_len = (1, 3)
+mov_avrgf_len = (1, 5)
 zh_difnan = np.where(rzhah.vars['diff [dBZ]'] == 0, np.nan,
                      rzhah.vars['diff [dBZ]'])
 zhpdiff = np.array([np.nanmedian(i) if ~np.isnan(np.nanmedian(i))
@@ -233,8 +237,8 @@ if PLOT_METHODS:
 # =============================================================================
 # ZDR attenuation correction
 # =============================================================================
-zhzdr_a = 0.000249173
-zhzdr_b = 2.33327
+# zhzdr_a = 0.000249173
+# zhzdr_b = 2.33327
 rb_a = 0.14  # Tropical
 rb_a = 0.19  # Continental
 
@@ -243,7 +247,8 @@ rattc.zdr_correction(rdata.georef, rdata.params, rozdr.vars, rattc.vars,
                      rhv_thld=0.95, mov_avrgf_len=7, minbins=10, p2avrf=5,
                      coeff_beta=[0.02, 0.1, 0.06], beta_alpha_ratio=rb_a,
                      attc_method='BRI', zh_zdr_model='exp',
-                     rparams={'coeff_a': zhzdr_a, 'coeff_b': zhzdr_b},
+                     rparams={'coeff_a': RPARAMS[rattc.site_name]['zdrzh_a'],
+                              'coeff_b': RPARAMS[rattc.site_name]['zdrzh_b']},
                      plot_method=PLOT_METHODS)
 if PLOT_METHODS:
     tp.datavis.rad_display.plot_ppidiff(rdata.georef, rdata.params, rozdr.vars,

@@ -13,17 +13,21 @@ import wradlib as wrl
 from wradlib.dp import phidp_kdp_vulpiani as kdpvpi
 import cartopy.crs as ccrs
 from radar import twpext as tpx
+from radar.rparams_dwdxpol import RPARAMS
 
 # =============================================================================
 # Define working directory and list files
 # =============================================================================
-RSITE = 'aaxpol'
-
 START_TIME = dt.datetime(2023, 8, 6, 0, 0)
-START_TIME = dt.datetime(2024, 3, 11, 12, 0)
+# START_TIME = dt.datetime(2024, 3, 11, 12, 0)
+# START_TIME = dt.datetime(2025, 7, 29, 0, 0)
 STOP_TIME = START_TIME+dt.timedelta(hours=24)
 # START_TIME = dt.datetime(2023, 3, 8, 1, 0)
-# STOP_TIME = START_TIME+dt.timedelta(minutes=30)
+
+
+RSITE = 'Aaxpol'
+RPARAMS = {rs['site_name']: rs for rs in RPARAMS if rs['site_name'] == RSITE}
+
 
 SCAN_ELEVS = {'el_450': 'sweep_8', 'el_250': 'sweep_7', 'el_124': 'sweep_6',
               'el_105': 'sweep_5', 'el_086': 'sweep_0', 'el_067': 'sweep_1',
@@ -39,14 +43,15 @@ PROFSDATA = EWDIR + 'pd_rdres/20210714/'
 MFS_DIR = (LWDIR + 'codes/github/unibonnpd/qc/xpol_mfs/')
 CLM_DIR = (LWDIR + 'codes/github/unibonnpd/qc/xpol_clm/')
 
-LPFILES = tpx.get_listfilesxpol(RSITE, SCAN_ELEV, START_TIME, STOP_TIME,
+LPFILES = tpx.get_listfilesxpol(RSITE, START_TIME, STOP_TIME, SCAN_ELEV,
                                 parent_dir=None)
 
 # %%
 # =============================================================================
 # Import data from wradlib to towerpy
 # =============================================================================
-N = 2
+N = 70
+N = 85
 PLOT_METHODS = True
 
 rdata = tpx.Rad_scan(LPFILES[N], f'{RSITE}')
@@ -58,60 +63,104 @@ if PLOT_METHODS:
 
 # %%
 # =============================================================================
-# rhoHV calibration
+# ZH offset correction
 # =============================================================================
-rad_cste = [15, 20, .1]
-rcrho = tpx.rhoHV_Noise_Bias(rdata)
-rcrho.iterate_radcst(rdata.georef, rdata.params, rdata.vars,
-                     data2correct=rdata.vars, plot_method=PLOT_METHODS,
-                     rad_cst=None)
+# rdata.zh_offset = RPARAMS[RSITE]['zhO']
+rdata.zh_offset = 0.
+rdata.vars['ZH [dBZ]'] += rdata.zh_offset
+print(f'{rdata.site_name}_ZH_O [{rdata.zh_offset :.2f} dBZ]')
 
 if PLOT_METHODS:
-    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rdata.vars,
-                                    var2plot='rhoHV [-]')
-    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rcrho.vars,
-                                    var2plot='rhoHV [-]')
+    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rdata.vars)
+
 # %%
 # =============================================================================
-# PhiDP unfolding
+# rhoHV calibration
 # =============================================================================
-rcrho.vars['PhiDP [deg]'] = wrl.dp.unfold_phi(rdata.vars['PhiDP [deg]'],
-                                              rcrho.vars['rhoHV [-]'],
-                                              width=35, copy=True)
+rcrho = tpx.rhoHV_Noise_Bias(rdata)
+# rhohv_theo, noise_lvl = (0.90, 1.1), None
+rcrho.iterate_radcst(rdata.georef, rdata.params, rdata.vars, noise_lvl=None,
+                     rhohv_theo=RPARAMS[rcrho.site_name]['rhvtc'],
+                     data2correct=rdata.vars, plot_method=PLOT_METHODS)
 
 if PLOT_METHODS:
-    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rdata.vars,
-                                    var2plot='PhiDP [deg]')
-    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rcrho.vars,
-                                    var2plot='PhiDP [deg]')
+    tp.datavis.rad_display.plot_ppidiff(
+        rdata.georef, rdata.params, rdata.vars, rcrho.vars,
+        var2plot1='rhoHV [-]', var2plot2='rhoHV [-]',
+        ucmap_diff='tpylsc_div_dbu_rd', diff_lims=[-0.5, 0.5, .1])
 # %%
 # =============================================================================
 # Noise suppression
 # =============================================================================
 rsnr = tp.eclass.snr.SNR_Classif(rdata)
+if rdata.params['radar constant [dB]'] <= 0:
+    min_snr = -rcrho.rhohv_corrs['Noise level [dB]']
+else:
+    min_snr = rcrho.rhohv_corrs['Noise level [dB]']
+print(f"minSNR = {min_snr:.2f} dB")
 rsnr.signalnoiseratio(rdata.georef, rdata.params, rcrho.vars,
                       min_snr=-rcrho.rhohv_corrs['Noise level [dB]'],
                       data2correct=rcrho.vars, plot_method=PLOT_METHODS)
 
 if PLOT_METHODS:
-    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rsnr.vars)
+    tp.datavis.rad_display.plot_setppi(rdata.georef, rdata.params, rsnr.vars)
+# %%
+# =============================================================================
+# PhiDP quality control and processing
+# =============================================================================
+ropdp = tp.calib.calib_phidp.PhiDP_Calibration(rdata)
+presetphidp = RPARAMS[ropdp.site_name]['phidp_prst'].get(
+    START_TIME.strftime("%Y%m%d"))
+ropdp.offsetdetection_ppi(rsnr.vars, preset=presetphidp)
+print(f'Phi_DP(0) = {ropdp.phidp_offset:.2f}')
+ropdp.offset_correction(
+    rsnr.vars['PhiDP [deg]'], phidp_offset=ropdp.phidp_offset,
+    data2correct=rsnr.vars)
+
+if PLOT_METHODS:
+    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rsnr.vars,
+                                    var2plot='PhiDP [deg]')
+    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, ropdp.vars,
+                                    var2plot='PhiDP [deg]')
+
+ropdp.vars['PhiDP [deg]'] = np.ascontiguousarray(
+    wrl.dp.unfold_phi(ropdp.vars['PhiDP [deg]'],
+                      ropdp.vars['rhoHV [-]'],
+                      width=3, copy=True).astype(np.float64))
+
+if PLOT_METHODS:
+    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, ropdp.vars,
+                                    var2plot='PhiDP [deg]')
 
 # %%
 # =============================================================================
-# Clutter identification and removal
+# Non-meteorological echoes identification and removal
 # =============================================================================
-rnme = tp.eclass.nme.NME_ID(rsnr)
-rnme.clutter_id(rdata.georef, rdata.params, rsnr.vars, binary_class=21,
-                min_snr=rsnr.min_snr, path_mfs=MFS_DIR, clmap=None,
-                data2correct=rsnr.vars, plot_method=True)
+rnme = tp.eclass.nme.NME_ID(rdata)
+clmap = None
+clbclass = RPARAMS[rnme.site_name]['bclass']
+# Despeckle and removal of linear signatures
+rnme.lsinterference_filter(rdata.georef, rdata.params, ropdp.vars,
+                           data2correct=ropdp.vars, plot_method=PLOT_METHODS)
+# Clutter ID and removal
+rnme.clutter_id(rdata.georef, rdata.params, rnme.vars, binary_class=clbclass,
+                min_snr=rsnr.min_snr, clmap=clmap, data2correct=rnme.vars,
+                plot_method=PLOT_METHODS)
+if PLOT_METHODS:
+    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, ropdp.vars,
+                                    var2plot='rhoHV [-]')
+    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rnme.vars,
+                                    var2plot='rhoHV [-]')
 # %%
 # ============================================================================
 # Melting layer allocation
 # ============================================================================
 rmlyr = tp.ml.mlyr.MeltingLayer(rdata)
-rmlyr.ml_top = 1.5
-rmlyr.ml_thickness = 0.75
+rmlyr.ml_top = 1.9
+rmlyr.ml_thickness = 0.85
 rmlyr.ml_bottom = rmlyr.ml_top-rmlyr.ml_thickness
+rmlyr.ml_ppidelimitation(rdata.georef, rdata.params, rnme.vars,
+                         plot_method=PLOT_METHODS)
 
 if PLOT_METHODS:
     tp.datavis.rad_display.plot_setppi(rdata.georef, rdata.params, rnme.vars,
@@ -121,150 +170,270 @@ if PLOT_METHODS:
 # =============================================================================
 # ZDR calibration
 # =============================================================================
-rczdr = tp.calib.calib_zdr.ZDR_Calibration(rdata)
-
-rczdr.offset_correction(rnme.vars['ZDR [dB]'], zdr_offset=-1.5,
+rozdr = tp.calib.calib_zdr.ZDR_Calibration(rdata)
+rozdr.offset_correction(rnme.vars['ZDR [dB]'], zdr_offset=-1.35,
                         data2correct=rnme.vars)
 
 if PLOT_METHODS:
-    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params,
-                                    rnme.vars, var2plot='ZDR [dB]')
-    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rczdr.vars,
-                                    var2plot='ZDR [dB]')
+    tp.datavis.rad_display.plot_ppidiff(rdata.georef, rdata.params, rdata.vars,
+                                        rozdr.vars, var2plot1='ZDR [dB]',
+                                        var2plot2='ZDR [dB]',
+                                        diff_lims=[-1, 1, 0.1])
 
 # %%
 # =============================================================================
 # Attenuation Correction
 # =============================================================================
+att_alphax = [0.15, 0.28, 0.22]  # Light rain PARK
+att_alphax = [0.28, 0.4, 0.34]  # Moderate to heavy rain PARK
+# att_alphax = [0.15, 0.35, 0.4, 0.34]  # PARK
 
 rattc = tp.attc.attc_zhzdr.AttenuationCorrection(rdata)
-rattc.zh_correction(rdata.georef, rdata.params, rczdr.vars,
+rattc.attc_phidp_prepro(rdata.georef, rdata.params, rozdr.vars, rhohv_min=0.85,
+                        phidp0_correction=False)
+if PLOT_METHODS:
+    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rozdr.vars,
+                                    var2plot='PhiDP [deg]')
+    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rattc.vars,
+                                    var2plot='PhiDP [deg]')
+rattc.zh_correction(rdata.georef, rdata.params, rattc.vars,
                     rnme.nme_classif['classif [EC]'], mlyr=rmlyr,
-                    attc_method='BRI', pdp_pxavr_azm=3, pdp_dmin=1,
+                    attc_method='ABRI', pdp_pxavr_azm=3, pdp_dmin=1,
                     pdp_pxavr_rng=round(4000/rdata.params['gateres [m]']),
-                    coeff_alpha=[0.1, 0.4, 0.38], coeff_b=[0.76, 0.84, 0.8],
-                    coeff_a=[9.781e-5, 1.749e-4, 1.367e-4],
+                    coeff_a=[9.781e-5, 1.749e-4, 1.367e-4],  # Park
+                    coeff_b=[0.757, 0.804, 0.78],  # Park
+                    # coeff_a=[5.50e-5, 1.62e-4, 9.745e-05],  # Diederich
+                    # coeff_b=[0.74, 0.86, 0.8],  # Diederich
+                    coeff_alpha=att_alphax,
                     plot_method=PLOT_METHODS)
 
 # %%
-zhzdr_a = 0.000249173
-zhzdr_b = 2.33327
-rattc.zdr_correction(rdata.georef, rdata.params, rczdr.vars, rattc.vars,
-                     rnme.nme_classif['classif [EC]'], mlyr=rmlyr, descr=True,
-                     rhv_thld=0.98, minbins=9, mov_avrgf_len=3, p2avrf=3,
-                     coeff_beta=[0.002, 0.04, 0.02], beta_alpha_ratio=0.165,
-                     method='exp', rparams={'a1': zhzdr_a, 'b1': zhzdr_b},
-                     plot_method=PLOT_METHODS)
+# =============================================================================
+# Partial beam blockage correction
+# =============================================================================
+temp = 15
+rzhah = tp.attc.r_att_refl.Attn_Refl_Relation(rdata)
+rzhah.ah_zh(rattc.vars, rband='X', zh_lower_lim=20, zh_upper_lim=55, temp=temp,
+            copy_ofr=True, plot_method=PLOT_METHODS)
+rattc.vars['ZH* [dBZ]'] = rzhah.vars['ZH [dBZ]']
+
+mov_avrgf_len = (1, 5)
+zh_difnan = np.where(rzhah.vars['diff [dBZ]'] == 0, np.nan,
+                     rzhah.vars['diff [dBZ]'])
+zhpdiff = np.array([np.nanmedian(i) if ~np.isnan(np.nanmedian(i))
+                    else 0 for cnt, i in enumerate(zh_difnan)])
+zhpdiff_pad = np.pad(zhpdiff, mov_avrgf_len[1]//2, mode='wrap')
+zhplus_maf = np.ma.convolve(
+    zhpdiff_pad, np.ones(mov_avrgf_len[1])/mov_avrgf_len[1],
+    mode='valid')
+rattc.vars['ZH+ [dBZ]'] = np.array(
+    [rattc.vars['ZH [dBZ]'][cnt] - i if i == 0
+     else rattc.vars['ZH [dBZ]'][cnt] - zhplus_maf[cnt]
+     for cnt, i in enumerate(zhpdiff)])
+
+if PLOT_METHODS:
+    tp.datavis.rad_display.plot_ppidiff(rdata.georef, rdata.params, rattc.vars,
+                                        rattc.vars, var2plot1='ZH [dBZ]',
+                                        var2plot2='ZH+ [dBZ]')
 
 # %%
 # =============================================================================
-# PBBc and ZHAH
+# ZDR attenuation correction
 # =============================================================================
-rzhah = tp.attc.r_att_refl.Attn_Refl_Relation(rdata)
-rzhah.ah_zh(rattc.vars, rband='X', zh_lower_lim=20, zh_upper_lim=50, temp=10,
-            copy_ofr=True,  # data2correct=rattc.vars,
-            plot_method=PLOT_METHODS)
+# zhzdr_a = 0.000249173
+# zhzdr_b = 2.33327
+rb_a = 0.14  # Tropical
+rb_a = 0.19  # Continental
 
+rattc.zdr_correction(rdata.georef, rdata.params, rozdr.vars, rattc.vars,
+                     rnme.nme_classif['classif [EC]'], mlyr=rmlyr, descr=True,
+                     rhv_thld=0.95, mov_avrgf_len=7, minbins=10, p2avrf=5,
+                     coeff_beta=[0.02, 0.1, 0.06], beta_alpha_ratio=rb_a,
+                     attc_method='BRI', zh_zdr_model='exp',
+                     rparams={'coeff_a': RPARAMS[rattc.site_name]['zdrzh_a'],
+                              'coeff_b': RPARAMS[rattc.site_name]['zdrzh_b']},
+                     plot_method=PLOT_METHODS)
 if PLOT_METHODS:
-    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rattc.vars)
-    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rzhah.vars)
+    tp.datavis.rad_display.plot_ppidiff(rdata.georef, rdata.params, rozdr.vars,
+                                        rattc.vars, var2plot1='ZDR [dB]',
+                                        var2plot2='ZDR [dB]',
+                                        diff_lims=[-5, 5, .5])
 
 # %%
 # =============================================================================
 # KDP Derivation
 # =============================================================================
+# =============================================================================
+# KDP Derivation
+# =============================================================================
 # KDP Vulpiani
+zh_kdp = 'ZH+ [dBZ]'
 rkdpv = {}
-if rdata.params['elev_ang [deg]'] > 8:
-    pdp2kadp = rattc.vars['PhiDP [deg]']
-    winlen = 5
-else:
-    pdp2kadp = rattc.vars['PhiDP* [deg]']
-    winlen = 15
-kdp_vulp = kdpvpi(pdp2kadp, winlen=winlen,
+kdp_vulp = kdpvpi(rattc.vars['PhiDP [deg]'], winlen=3,
                   dr=rdata.params['gateres [m]']/1000, copy=True)
 rkdpv['PhiDP [deg]'] = kdp_vulp[0]
 rkdpv['KDP [deg/km]'] = kdp_vulp[1]
-rkdpv['PhiDP [deg]'][np.isnan(rattc.vars['ZH [dBZ]'])] = np.nan
-rkdpv['KDP [deg/km]'][np.isnan(rattc.vars['ZH [dBZ]'])] = np.nan
+
+# Remove NME
+rattc.vars['KDP* [deg/km]'] = np.where(rnme.nme_classif['classif [EC]'] != 0,
+                                       np.nan, rkdpv['KDP [deg/km]'])
+# rattc.vars['KDP* [deg/km]'] = np.where(rnme.ls_dsp_class['classif [EC]'] != 0,
+#                                        np.nan, rkdpv['KDP [deg/km]'])
+rattc.vars['PhiDPv [deg]'] = np.where(rnme.nme_classif['classif [EC]'] != 0,
+                                      np.nan, rkdpv['PhiDP [deg]'])
+
+# Remove negative KDP values in rain region and within ZH threshold
+rattc.vars['KDP* [deg/km]'] = np.where(
+    (rmlyr.mlyr_limits['pcp_region [HC]'] == 1)
+    & (rkdpv['KDP [deg/km]'] < 0) & (rattc.vars[zh_kdp] > 0),
+    # 0, rkdpv['KDP [deg/km]'])
+    0, rattc.vars['KDP* [deg/km]'])
+# Filter KDP by applying thresholds in ZH and rhoHV
+rattc.vars['KDP+ [deg/km]'] = np.where(
+    (rattc.vars[zh_kdp] > 40) & (rattc.vars[zh_kdp] <= 55)
+    & (rozdr.vars['rhoHV [-]'] > 0.95) & (rattc.vars['KDP [deg/km]'] != 0)
+    & (~np.isnan(rattc.vars['KDP [deg/km]'])),
+    rattc.vars['KDP [deg/km]'], rattc.vars['KDP* [deg/km]'])
+# rattc.vars['PhiDPv [deg]'] = rkdpv['PhiDPv [deg]']
 
 if PLOT_METHODS:
-    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rattc.vars,
-                                    var2plot='KDP [deg/km]',
-                                    # var2plot='PhiDP [deg]',
-                                    xlims=[-50, 20], ylims=[-40, 50],
-                                    vars_bounds={'KDP [deg/km]': (-1, 3, 17)})
+    tp.datavis.rad_display.plot_ppidiff(
+        rdata.georef, rdata.params, rattc.vars, rattc.vars,
+        var2plot1='KDP* [deg/km]', var2plot2='KDP+ [deg/km]',
+        diff_lims=[-5, 5, .5], vars_bounds={'KDP [deg/km]': (-1, 3, 17)})
 
-    tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rkdpv,
-                                    var2plot='KDP [deg/km]',
-                                    # var2plot='PhiDP [deg]',
-                                    xlims=[-50, 20], ylims=[-40, 50],
-                                    vars_bounds={'KDP [deg/km]': (-1, 3, 17)})
 # %%
 # =============================================================================
 # Rainfall estimation
 # =============================================================================
-zhr = rattc.vars['ZH [dBZ]']
-# zhr = zh_ah['ZH [dBZ]']
-zdrr = rattc.vars['ZDR [dB]']
-kdpr = rattc.vars['KDP [deg/km]']
-# kdpr = rkdpv['KDP [deg/km]']
+zh_r = 'ZH+ [dBZ]'  # ZH(AH)
+kdp_r = 'KDP+ [deg/km]'  # Vulpiani+AH
+zdr_r = 'ZDR [dB]'  # ZDR_ATTC
+zh_kdpo = 'ZH+ [dBZ]'  # ZH(AH)
+zh_zho = 'ZH+ [dBZ]'  # ZH(AH)
+kdp_kdpo = 'KDP [deg/km]'  # KDP(AH)
+
 z_thld = 40
 
-rmlyr2 = None
+rz_a, rz_b = 72, 2.14  # Diederich2015
+# rz_a, rz_b = (1/0.098)**(1/0.57), 1/0.47  # Chen2021
+# rz_a, rz_b = (1/0.057)**(1/0.57), 1/0.57  # Chen2023
+rz_ahail, rz_bhail = (1/0.035)**(1/0.52), 1/0.52  # Chen2023
+rkdp_a, rkdp_b = 16.9, 0.801  # Diederich2015
+# rkdp_a, rkdp_b = 22.9, 0.76  # Chen2023
+# rkdp_a, rkdp_b = 15.6, 0.83  # Chen2021
+rkdp_zdr_a, rkdp_zdr_b, rkdp_zdr_c = 28.6, 0.95, -1.37  # Bringi
 
 rqpe = tp.qpe.qpe_algs.RadarQPE(rdata)
-rqpe.z_to_r(zhr, a=72, b=2.14, mlyr=rmlyr,
-            beam_height=rdata.georef['beam_height [km]'])
-rqpe.z_zdr_to_r(zhr, zdrr, mlyr=rmlyr,
-                beam_height=rdata.georef['beam_height [km]'])
-rqpe.ah_to_r(rattc.vars['AH [dB/km]'], a=45.5, b=0.83, mlyr=rmlyr,
+rqpe.adp_to_r(rattc.vars['ADP [dB/km]'], rband='X', temp=temp, mlyr=rmlyr,
+              beam_height=rdata.georef['beam_height [km]'])
+rqpe.ah_to_r(rattc.vars['AH [dB/km]'], rband='X', temp=temp, mlyr=rmlyr,
              beam_height=rdata.georef['beam_height [km]'])
-rqpe.adp_to_r(rattc.vars['ADP [dB/km]'], a=53.3, b=0.85, mlyr=rmlyr,
+rqpe.kdp_to_r(rattc.vars[kdp_r], a=rkdp_a, b=rkdp_b, mlyr=rmlyr,
               beam_height=rdata.georef['beam_height [km]'])
-rqpe.kdp_to_r(kdpr, a=16.9, b=0.801, mlyr=rmlyr,
-              beam_height=rdata.georef['beam_height [km]'])
-rqpe.z_ah_to_r(zhr, rattc.vars['AH [dB/km]'], a1=72, b1=2.14, a2=45.5, b2=0.83,
-               z_thld=z_thld, mlyr=rmlyr2,
+rqpe.kdp_zdr_to_r(rattc.vars[kdp_r], rattc.vars[zdr_r],
+                  a=rkdp_zdr_a, b=rkdp_zdr_b, c=rkdp_zdr_c,
+                  mlyr=rmlyr, beam_height=rdata.georef['beam_height [km]'])
+rqpe.z_to_r(rattc.vars[zh_r], a=rz_a, b=rz_b, mlyr=rmlyr,
+            beam_height=rdata.georef['beam_height [km]'])
+rqpe.z_ah_to_r(rattc.vars[zh_r], rattc.vars['AH [dB/km]'], rband='X',
+               rz_a=rz_a, rz_b=rz_b, temp=temp, z_thld=z_thld, mlyr=rmlyr,
                beam_height=rdata.georef['beam_height [km]'])
-rqpe.z_kdp_to_r(zhr, kdpr, a1=72, b1=2.14, a2=16.9, b2=0.801, z_thld=z_thld,
-                mlyr=rmlyr, beam_height=rdata.georef['beam_height [km]'])
-rqpe.kdp_zdr_to_r(kdpr, zdrr, a=28.6, b=0.95, c=-1.37, mlyr=rmlyr,
+rqpe.z_kdp_to_r(rattc.vars[zh_r], rattc.vars[kdp_r], rz_a=rz_a, rz_b=rz_b,
+                rkdp_a=rkdp_a, rkdp_b=rkdp_b, mlyr=rmlyr, z_thld=z_thld,
+                beam_height=rdata.georef['beam_height [km]'])
+rqpe.z_zdr_to_r(rattc.vars[zh_r], rattc.vars[zdr_r], mlyr=rmlyr,
+                beam_height=rdata.georef['beam_height [km]'])
+# ZH(R) Adaptive
+rzh_fit = tpx.rzh_opt(rattc.vars[zh_zho], rqpe.r_ah, rattc.vars['AH [dB/km]'],
+                      pia=rattc.vars['PIA [dB]'], maxpia=20, rzfit_b=1.6,
+                      rz_stv=[[rz_a, rz_b]], plot_method=PLOT_METHODS)
+rqpe_opt = tp.qpe.qpe_algs.RadarQPE(rdata)
+rqpe_opt.z_to_r(rattc.vars[zh_r], a=rzh_fit[0], b=rzh_fit[1], mlyr=rmlyr,
+                beam_height=rdata.georef['beam_height [km]'])
+rqpe.r_zopt = rqpe_opt.r_z
+# R_KDP Adaptive
+rkdp_fit = tpx.rkdp_opt(rattc.vars[kdp_kdpo], rattc.vars[zh_kdpo], mlyr=rmlyr,
+                        plot_method=True)
+rqpe_opt.kdp_to_r(rattc.vars[kdp_r], a=rkdp_fit[0], b=rkdp_fit[1], mlyr=rmlyr,
                   beam_height=rdata.georef['beam_height [km]'])
+rqpe.r_kdpopt = rqpe_opt.r_kdp
 
-# PLOT_METHODS=True
+qpe_amlb = False
+thr_zwsnw = 0
+thr_zhail = 55
+if qpe_amlb:
+    f_rz_ml = 0.6
+    f_rz_sp = 2.8
+else:
+    f_rz_ml = 0.
+    f_rz_sp = 0.
+# =============================================================================
+# Additional factor for the RZ relation is applied to data within the ML
+# =============================================================================
+rqpe_ml = tp.qpe.qpe_algs.RadarQPE(rdata)
+rqpe_ml.z_to_r(rattc.vars[zh_r], a=rz_a, b=rz_b)
+rqpe_ml.r_z['Rainfall [mm/h]'] = np.where(
+    (rmlyr.mlyr_limits['pcp_region [HC]'] == 2)
+    & (rattc.vars[zh_r] > thr_zwsnw),
+    rqpe_ml.r_z['Rainfall [mm/h]']*f_rz_ml, np.nan)
+# =============================================================================
+# Additional factor for the RZ relation is applied to data above the ML
+# =============================================================================
+rqpe_sp = tp.qpe.qpe_algs.RadarQPE(rdata)
+rqpe_sp.z_to_r(rattc.vars[zh_r], a=rz_a, b=rz_b)
+rqpe_sp.r_z['Rainfall [mm/h]'] = np.where(
+    (rmlyr.mlyr_limits['pcp_region [HC]'] == 3.),
+    rqpe_sp.r_z['Rainfall [mm/h]']*f_rz_sp, rqpe_ml.r_z['Rainfall [mm/h]'])
+# Correct all other variables
+[setattr(rqpe, rp, {(k1): (np.where(
+    (rmlyr.mlyr_limits['pcp_region [HC]'] == 1),
+    getattr(rqpe, rp)['Rainfall [mm/h]'],
+    rqpe_sp.r_z['Rainfall [mm/h]']) if 'Rainfall' in k1 else v1)
+    for k1, v1 in getattr(rqpe, rp).items()})
+    for rp in rqpe.__dict__.keys() if rp.startswith('r_')]
+# =============================================================================
+# rz_hail is applied to data below the ML with Z > 55 dBZ
+# =============================================================================
+rqpe_hail = tp.qpe.qpe_algs.RadarQPE(rdata)
+rqpe_hail.z_to_r(rattc.vars[zh_r], a=rz_ahail, b=rz_bhail)
+rqpe_hail.r_z['Rainfall [mm/h]'] = np.where(
+    (rmlyr.mlyr_limits['pcp_region [HC]'] == 1)
+    & (rattc.vars[zh_r] >= thr_zhail),
+    rqpe_hail.r_z['Rainfall [mm/h]'], 0)
+# Correct all other variables
+[setattr(rqpe, rp, {(k1): (np.where(
+    (rmlyr.mlyr_limits['pcp_region [HC]'] == 1)
+    & (rattc.vars[zh_r] >= thr_zhail), rqpe_hail.r_z['Rainfall [mm/h]'],
+    getattr(rqpe, rp)['Rainfall [mm/h]']) if 'Rainfall' in k1 else v1)
+    for k1, v1 in getattr(rqpe, rp).items()})
+    for rp in rqpe.__dict__.keys() if rp.startswith('r_')]
+
 if PLOT_METHODS:
+    rests = [i for i in sorted(dir(rqpe)) if i.startswith('r_kdpopt')
+             or i.startswith('r_zopt')]
+    for i in rests:
+        tp.datavis.rad_display.plot_ppi(
+            rdata.georef, rdata.params, getattr(rqpe, i),
+            fig_title=f"{rdata.params['elev_ang [deg]']:{2}.{3}} deg. --"
+            + f" {rdata.params['datetime']:%Y-%m-%d %H:%M:%S} -- {i}")
     tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params,
-                                    # rqpe.r_z,
-                                    # rqpe.r_z_zdr,
                                     # rqpe.r_ah,
-                                    # rqpe.r_adp,
                                     # rqpe.r_kdp,
-                                    rqpe.r_z_ah,
-                                    # rqpe.r_z_kdp,
-                                    # rqpe.r_kdp_zdr,
-                                    # xlims=[-50, 50], ylims=[-50, 50],
+                                    rqpe.r_z,
+                                    # rqpe.r_z_ah,
+                                    cpy_feats={
+                                        'status': True,
+                                        # 'tiles': True, 'alpha_rad': 0.25
+                                               },
+                                    data_proj=ccrs.UTM(zone=32),
+                                    proj_suffix='utm',
+                                    # var2plot='rhoHV [-]'
+                                    xlims=[4.3, 9.2], ylims=[52.75, 48.75],
+                                    # NRW
+                                    # xlims=[4.5, 16.5], ylims=[55.5, 46.5]
+                                    # DEU
                                     )
-
-# %%
-xlims, ylims = [5.99, 6.5], [51, 50.4]
-xlims, ylims = [5., 8], [51.75, 49]
-
-tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params,  # rdata.vars,
-                                rqpe.r_z_ah,
-                                # rdata.vars, # rnme.vars, # rqpe.r_ah,
-                                # rqpe.r_z,
-                                cpy_feats={'status': True, 'tiles': False,
-                                           'tiles_source': 'Stamen',
-                                           'tiles_style': 'terrain',
-                                           'tiles_res': 8, 'alpha_tiles': 1,
-                                           'alpha_rad': 1},
-                                data_proj=ccrs.UTM(zone=32),
-                                proj_suffix='utm',
-                                xlims=xlims, ylims=ylims
-                                # xlims=[4.3, 9.2], ylims=[52.75, 48.75],  # NRW
-                                # xlims=[4.5, 16.5],ylims=[55.5, 46.5] # DEU
-                                )
 # %%
 # =============================================================================
 # Creates a new radar object

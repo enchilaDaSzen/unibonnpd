@@ -40,6 +40,7 @@ START_TIME = dt.datetime(2018, 12, 2, 0, 0)  # 24 hr [NO JXP]
 # START_TIME = dt.datetime(2021, 2, 6, 0, 0)  # 24 hr [NO BXP]
 # START_TIME = dt.datetime(2021, 7, 13, 0, 0)  # 24 hr []
 # START_TIME = dt.datetime(2021, 7, 14, 0, 0)  # 24 hr [NO BXP]
+START_TIME = dt.datetime(2023, 12, 23, 0, 0)  # 24 hr [NO BXP]
 
 STOP_TIME = START_TIME+dt.timedelta(hours=24)
 
@@ -56,7 +57,7 @@ PDIR = None
 # =============================================================================
 # Choose only one site at a time
 # Boxpol, Juxpol, Essen, Flechtdorf, Neuheilenbach, Offenthal
-RSITE = 'Juxpol'
+RSITE = 'Dresden'
 RPARAMS = {RSITE: next(item for item in RPARAMS if item['site_name'] == RSITE)}
 for k1, v1 in RPARAMS.items():
     if k1.lower() == 'boxpol':
@@ -297,9 +298,9 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                 rdata2 = tpx.Rad_scan(rscan, RPARAMS[RSITE]['site_name'])
                 rdata2.ppi_dwd(get_rvar='cmap')
                 clfmap = 1 - tp.utils.radutilities.normalisenanvalues(
-                    rdata2.vars['cmap [0-1]'],
-                    np.nanmin(rdata2.vars['cmap [0-1]']),
-                    np.nanmax(rdata2.vars['cmap [0-1]']))
+                    rdata2.vars['cmap [class]'],
+                    np.nanmin(rdata2.vars['cmap [class]']),
+                    np.nanmax(rdata2.vars['cmap [class]']))
                 clfmap = np.nan_to_num(clfmap, nan=1e-5)
 
             rnme = tp.eclass.nme.NME_ID(rdata)

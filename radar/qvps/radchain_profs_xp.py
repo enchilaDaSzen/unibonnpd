@@ -23,7 +23,7 @@ from zoneinfo import ZoneInfo
 RADAR_SITE = 'Neuheilenbach'
 PTYPE = 'qvps'
 
-fullqc = True
+fullqc = False
 read_mlcal = True
 
 PLOT_METHODS = False
@@ -214,6 +214,14 @@ htixlim = [
     DTWORK.replace(tzinfo=ZoneInfo(tz)),
     (DTWORK + dt.timedelta(seconds=86399)).replace(tzinfo=ZoneInfo(tz))]
 
+tp.datavis.rad_display.plot_radprofiles(
+    rprofs[212], rprofs[212].georef['profiles_height [km]'], colours=False,
+    vars_bounds={'PhiDP [deg]': [-10, 20, 13]}, ylims=[0, 12],
+    # stats='std_dev'
+    )
+# %%
+
+
 if fullqc:
     for rp1 in rprofs:
         rp1.qvps['ZH- [dBZ]'] = rp1.qvps['ZH+ [dBZ]'] - rp1.qvps['ZH [dBZ]']
@@ -222,7 +230,7 @@ v2p = 'PhiDP [deg]'
 v2p = 'KDP [deg/km]'
 # v2p = 'AH [dB/km]'
 # v2p = 'ZH+ [dBZ]'
-# v2p = 'ZH [dBZ]'
+v2p = 'ZH [dBZ]'
 # v2p = 'ZDR [dB]'
 # v2p = 'rhoHV [-]'
 # v2p = 'bin_class [0-5]'
@@ -295,16 +303,17 @@ else:
 
 radb = tp.datavis.rad_interactive.hti_base(
     rprofs, mlyrs=(rprfc['mlyr'] if read_mlcal else None),
-    var2plot=v2p, stats=None,  # stats='std_dev',
-    vars_bounds={'bin_class [0-5]': (0, 6, 7),
-                 'prof_type [0-6]': (0, 7, 8),
-                 'PhiDP [deg]': [0, 90, 10],
-                 'KDP [deg/km]': [-0.4, 1.2, 17],  # [-0.20, 0.6, 17],
-                 'AH [dB/km]': [0., 0.10, 11],  # [0., 0.20, 21]
-                 # 'ZDR [dB]': [-0.8, 2.4, 17],  # [0., 0.20, 21]
-                 'ZH+ [dBZ]': [-10, 60, 15], 'ZHa [dBZ]': [-10, 60, 15],
-                 'ZH- [dBZ]': [-8, 8, 15],
-                 },
+    var2plot=v2p, 
+    stats=None,  # stats='std_dev',
+    # vars_bounds={'bin_class [0-5]': (0, 6, 7),
+    #              'prof_type [0-6]': (0, 7, 8),
+    #              'PhiDP [deg]': [0, 90, 10],
+    #              'KDP [deg/km]': [-0.4, 1.2, 17],  # [-0.20, 0.6, 17],
+    #              'AH [dB/km]': [0., 0.10, 11],  # [0., 0.20, 21]
+    #              # 'ZDR [dB]': [-0.8, 2.4, 17],  # [0., 0.20, 21]
+    #              'ZH+ [dBZ]': [-10, 60, 15], 'ZHa [dBZ]': [-10, 60, 15],
+    #              'ZH- [dBZ]': [-8, 8, 15],
+    #              },
     ptype=ptype, ucmap=ucmap, htiylim=[0, 12], htixlim=htixlim,
     cbticks=cbticks, contourl=contourl, tz=tz, fig_size=(19.2, 11),
     # unorm=unorm, ucmap=cmap_prabhakar,

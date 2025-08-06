@@ -3,7 +3,7 @@
 """
 Created on Tue Mar 11 19:48:03 2025
 
-@author: enchiladaszen
+@author: dsanchez
 """
 
 from scipy.stats import norm

@@ -40,10 +40,10 @@ EWDIR = '/run/media/dsanchez/PSDD1TB/safe/bonn_postdoc/'
 START_TIME = dt.datetime(2018, 12, 2, 0, 0)  # 24 h [NO JXP]
 # START_TIME = dt.datetime(2019, 5, 8, 0, 0)  # 24 h [NO JXP]
 # # START_TIME = dt.datetime(2019, 5, 11, 0, 0)  # 24 h [NO JXP]
-# START_TIME = dt.datetime(2019, 7, 20, 8, 0)  # 16 h [NO BXP]
+START_TIME = dt.datetime(2019, 7, 20, 8, 0)  # 16 h [NO BXP]
 # START_TIME = dt.datetime(2020, 6, 17, 0, 0)  # 24 h [NO BXP]
 # START_TIME = dt.datetime(2021, 7, 13, 0, 0)  # 24 h [NO BXP]
-START_TIME = dt.datetime(2021, 7, 14, 0, 0)  # 24 h [NO BXP]
+# START_TIME = dt.datetime(2021, 7, 14, 0, 0)  # 24 h [NO BXP]
 
 # STOP_TIME = dt.datetime(2021, 7, 13, 23, 59)
 # EVNTD_HRS = round((STOP_TIME - START_TIME).total_seconds() / 3600)
@@ -57,7 +57,7 @@ QPE_TRES = dt.timedelta(minutes=5)
 # =============================================================================
 # Choose only one site at a time
 # Boxpol, Juxpol, Essen, Flechtdorf, Neuheilenbach, Offenthal
-RSITE = 'Offenthal'
+RSITE = 'Juxpol'
 RPARAMS = [next(item for item in RPARAMS if item['site_name'] == RSITE)]
 
 # =============================================================================
@@ -83,8 +83,8 @@ zdrOv = [i for i in profs_data['zdrO'] if ~np.isnan(i.zdr_offset)]
 # Set plotting parameters
 # =============================================================================
 PLOT_METHODS = False
-PLOT_FIGS = False
-SAVE_FIGS = False
+PLOT_FIGS = True
+SAVE_FIGS = True
 SAVE_COEFFS = False
 
 # fig_size = (13.5, 7)
@@ -717,6 +717,10 @@ if PLOT_FIGS:
         wxsid2plot = [i for i in rg_precip['station_id'][nplot[0]:nplot[-1]]]
         wxsdt2plot = [i for i in rg_precip['rain_idt'][nplot[0]:nplot[-1]]]
         wxsrc2plot = [i for i in rg_precip['rain_cumsum'][nplot[0]:nplot[-1]]]
+        w1max = np.nanmax([np.nanmax(i) for i in wxsrc2plot])
+        plimit_min = (-1.5 if w1max < 50 else -2.5 if 50 < w1max < 150
+                      else -5 if w1max > 150 else -1.5)
+        plimit_max = w1max*1.25 + (25 - w1max*1.25) % 25
         for rp in rprods:
             if rp in RPRODSLTX:
                 rprodkltx = RPRODSLTX.get(rp)
@@ -738,8 +742,8 @@ if PLOT_FIGS:
                 axg.set_ylabel('Rainfall [mm]', fontsize=16)
                 # axg.set_xlim(htixlim)
                 # axg.set_ylim([-1.5, 30.])
-                # axg.set_ylim([-2.5, 50.])
-                axg.set_ylim([-5, 190.])
+                axg.set_ylim([plimit_min, plimit_max])
+                # axg.set_ylim([-5, 190.])
                 axg.grid(True)
                 axg.set_axisbelow(True)
                 axg.tick_params(axis='both', which='major', labelsize=14)
@@ -805,7 +809,7 @@ if PLOT_FIGS:
                              xlims=xlims, ylims=ylims, points2plot=rg_acprecip,
                              ptsvar2plot='Rainfall [mm]',
                              data_proj=ccrs.PlateCarree(), proj_suffix='wgs84',
-                             unorm=unorm,  # ucmap='turbo',
+                             # unorm=unorm,  # ucmap='turbo',
                              fig_title=(
                                   f'{RSITE} -- {rprodkltx}: '
                                   + f"{rqpe_acc.params['datetime']:%Y-%m-%d}"))
@@ -813,7 +817,7 @@ if PLOT_FIGS:
             fname = (f"{START_TIME.strftime('%Y%m%d')}"
                      + f"_{RPARAMS[0]['site_name'][:3].lower()}_daily_"
                      + f"{re.replace('_', '')}{appxf}.png")
-            plt.savefig(RES_DIR+fname, format='png')
+            plt.savefig(RES_DIR+fname, dpi=200, format='png')
             plt.close()
 
 # %%
@@ -926,7 +930,7 @@ if SAVE_FIGS:
     fname = (f"{START_TIME.strftime('%Y%m%d')}"
              + f"_{RPARAMS[0]['site_name'][:3].lower()}"
              + f"_daily_qpestats{appxf}.png")
-    plt.savefig(RES_DIR+fname, format='png')
+    plt.savefig(RES_DIR+fname, dpi=200, format='png')
 
 # %%
 # =============================================================================
@@ -1036,7 +1040,7 @@ if SAVE_FIGS:
     # RES_DIR2 = RES_DIR.replace('rsite_qpe', 'rsite_dailyqc')
     fname = (f"{START_TIME.strftime('%Y%m%d')}"
              + f"_{RPARAMS[0]['site_name'][:3].lower()}_daily_coeffs.png")
-    plt.savefig(RES_DIR + fname, format='png')
+    plt.savefig(RES_DIR + fname, dpi=200, format='png')
 
 if SAVE_COEFFS:
     # RES_DIR2 = RES_DIR.replace('rsite_qpe', 'rsite_dailyqc')

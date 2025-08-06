@@ -250,9 +250,9 @@ for scan in RSITE_FILES[RSITE]:
             rdata2 = tpx.Rad_scan(scan, RPARAMS[RSITE]['site_name'])
             rdata2.ppi_dwd(get_rvar='cmap')
             clfmap = 1 - tp.utils.radutilities.normalisenanvalues(
-                rdata2.vars['cmap [0-1]'],
-                np.nanmin(rdata2.vars['cmap [0-1]']),
-                np.nanmax(rdata2.vars['cmap [0-1]']))
+                rdata2.vars['cmap [class]'],
+                np.nanmin(rdata2.vars['cmap [class]']),
+                np.nanmax(rdata2.vars['cmap [class]']))
             clfmap = np.nan_to_num(clfmap, nan=1e-5)
 
         rnme = tp.eclass.nme.NME_ID(rdata)

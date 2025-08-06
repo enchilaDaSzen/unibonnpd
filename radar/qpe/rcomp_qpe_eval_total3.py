@@ -11,6 +11,7 @@ import datetime as dt
 import pickle
 import numpy as np
 from radar import twpext as tpx
+from radar.rparams_dwdxpol import RPRODSLTX
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.colors as mplclr
@@ -46,31 +47,31 @@ rprods_nmd = ['r_aho_kdpo', 'r_kdpo', 'r_zo', 'r_zo_ah', 'r_zo_kdp',
 rprods = sorted(rprods_dp[1:] + rprods_hbr + rprods_opt + rprods_hyop
                 + ['r_zo'])
 
-SAVE_FIGS = False
+SAVE_FIGS = True
 
 
 RES_DIR = LWDIR + "pd_rdres/qpe_all/rcomp_qpe_dwd_dwdxpol/"
 
-rprodsltx = {'r_adp': '$R(A_{DP})$', 'r_ah': '$R(A_{H})$',
-             'r_kdp': '$R(K_{DP})$', 'r_z': '$R(Z_H)$',
-             'r_ah_kdp': '$R(A_{H}, K_{DP})$',
-             'r_kdp_zdr': '$R(K_{DP}, Z_{DR})$', 'r_z_ah': '$R(Z_H, A_{H})$',
-             'r_z_kdp': '$R(Z_{H}, K_{DP})$', 'r_z_zdr': '$R(Z_{H}, Z_{DR})$',
-             'r_kdpopt': '$R(K_{DP})[opt]$', 'r_zopt': '$R(Z_{H})[opt]$',
-             'r_ah_kdpopt': '$R(A_{H}, K_{DP}[opt])$',
-             'r_zopt_ah': '$R(Z_{H}[opt], A_{H})$',
-             'r_zopt_kdp': '$R(Z_{H}[opt], K_{DP})$',
-             'r_zopt_kdpopt': '$R(Z_{H}[opt], K_{DP}[opt])$',
-             'r_aho_kdpo': '$R(A_{H}, K_{DP})[evnt-spcf]$',
-             'r_kdpo': '$R(K_{DP})[evnt-spcf]$',
-             'r_zo': '$R(Z_{H})[evnt-spcf]$',
-             'r_zo_ah': '$R(Z_{H}, A_{H})[evnt-spcf]$',
-             'r_zo_kdp': '$R(Z_{H}, K_{DP})[evnt-spcf]$',
-             'r_zo_zdr': '$R(Z_{H}, Z_{DR})[evnt-spcf]$'}
+# RPRODSLTX = {'r_adp': '$R(A_{DP})$', 'r_ah': '$R(A_{H})$',
+#              'r_kdp': '$R(K_{DP})$', 'r_z': '$R(Z_H)$',
+#              'r_ah_kdp': '$R(A_{H}, K_{DP})$',
+#              'r_kdp_zdr': '$R(K_{DP}, Z_{DR})$', 'r_z_ah': '$R(Z_H, A_{H})$',
+#              'r_z_kdp': '$R(Z_{H}, K_{DP})$', 'r_z_zdr': '$R(Z_{H}, Z_{DR})$',
+#              'r_kdpopt': '$R(K_{DP})[opt]$', 'r_zopt': '$R(Z_{H})[opt]$',
+#              'r_ah_kdpopt': '$R(A_{H}, K_{DP}[opt])$',
+#              'r_zopt_ah': '$R(Z_{H}[opt], A_{H})$',
+#              'r_zopt_kdp': '$R(Z_{H}[opt], K_{DP})$',
+#              'r_zopt_kdpopt': '$R(Z_{H}[opt], K_{DP}[opt])$',
+#              'r_aho_kdpo': '$R(A_{H}, K_{DP})[evnt-spcf]$',
+#              'r_kdpo': '$R(K_{DP})[evnt-spcf]$',
+#              'r_zo': '$R(Z_{H})[evnt-spcf]$',
+#              'r_zo_ah': '$R(Z_{H}, A_{H})[evnt-spcf]$',
+#              'r_zo_kdp': '$R(Z_{H}, K_{DP})[evnt-spcf]$',
+#              'r_zo_zdr': '$R(Z_{H}, Z_{DR})[evnt-spcf]$'}
 
 # if START_TIME != dt.datetime(2021, 7, 14, 0, 0):
-rprodsltx['r_kdpo'] = '$R(K_{DP})[OV]$'
-rprodsltx['r_zo'] = '$R(Z_{H})[OA]$'
+RPRODSLTX['r_kdpo'] = '$R(K_{DP})[OV]$'
+RPRODSLTX['r_zo'] = '$R(Z_{H})[OA]$'
 
 # %%
 # =============================================================================
@@ -275,8 +276,8 @@ for nrn in radntws:
         fres4eval = (fres if nrn == rcomp else fres2)
         qpe_stats4eval = (qpe_stats if nrn == rcomp else qpe_stats2)
         for (axg, rprodk) in zip(grid, [k for k in sorted(rqpe2eval.keys())]):
-            if rprodk in rprodsltx:
-                rprodkltx = rprodsltx.get(rprodk)
+            if rprodk in RPRODSLTX:
+                rprodkltx = RPRODSLTX.get(rprodk)
             else:
                 rprodkltx = rprodk
             axg.set_title(f'{rprodkltx}', size=16)
@@ -314,7 +315,7 @@ for nrn in radntws:
         plt.tight_layout()
     if SAVE_FIGS:
         fname = (f"devents{len(daccum)}_{nrn}_accum_24h.png")
-        plt.savefig(RES_DIR + fname, format='png')
+        plt.savefig(RES_DIR + fname, dpi=200, format='png')
 
 # %%
 
@@ -336,8 +337,8 @@ lblsz = 15
 #     colors = plt.get_cmap('Spectral_r')
 
 bnd = {}
-bnd['MAE'] = np.linspace(0, 10, 11)
-bnd['RMSE'] = np.linspace(0, 10, 11)
+bnd['MAE'] = np.linspace(0, 15, 16)
+bnd['RMSE'] = np.linspace(0, 15, 16)
 bnd['NRMSE [%]'] = np.linspace(20, 100, 17)
 bnd['NMB [%]'] = np.linspace(-50, 50, 11)
 bnd['R_Pearson [-]'] = np.linspace(0.8, 1, 21)
@@ -389,7 +390,7 @@ ms3 = {iev: ms12[cnt] for cnt, iev in enumerate(qpe_stats_ev)}
 
 # %%
 # from mpl_toolkits.axes_grid1 import make_axes_locatable
-fsize = (19, 8)
+fsize = (19, 9)
 
 stats2plot = ('R_Pearson [-]', 'KGE')
 
@@ -409,7 +410,7 @@ for nps in stats2plot:
                            width=np.radians((360/len(qpe_stats))-1), bottom=0,
                            edgecolors='k', cmap=cmp, norm=dnorm[nps])
         cb = fig.colorbar(coll, orientation='vertical', location='right',
-                          fraction=0.10, shrink=0.8,
+                          fraction=0.10, shrink=0.7,
                           extend=dnorm[nps].extend, pad=.13)
         cb.ax.tick_params(labelsize=lblsz)
         coll2 = colored_bar(theta, [st[nps][0][1]
@@ -445,7 +446,10 @@ for nps in stats2plot:
         for c1, v1 in enumerate(qpe_stats):
             x = (((np.deg2rad(360/len(qpe_stats)))/2)
                  + ((np.deg2rad(360/len(qpe_stats)))*c1))
-            ax1.text(x, y, f'{rprodsltx.get(v1)}', ha='center', va='center',
+            nrret = RPRODSLTX.get(v1)
+            if '&' in nrret:
+                nrret = nrret.replace('&', '$ &\n$')
+            ax1.text(x, y, f'{nrret}', ha='center', va='center',
                      size=lblsz)
     fig.legend(loc='lower left', fontsize=lblsz-1)
     if nps == 'KGE':
@@ -456,7 +460,7 @@ for nps in stats2plot:
                            width=np.radians((360/len(qpe_stats))-1), bottom=0,
                            edgecolors='grey', cmap=cmp, norm=dnorm[nps])
         cb = fig.colorbar(coll, orientation='vertical', location='right',
-                          fraction=0.10, shrink=0.8,
+                          fraction=0.10, shrink=0.7,
                           extend=dnorm[nps].extend, pad=.13)
         cb.ax.tick_params(labelsize=lblsz)
         cb.ax.set_title(f'\n[{rcomp.replace("rcomp_qpe", "QPE").upper()}]',
@@ -497,7 +501,10 @@ for nps in stats2plot:
         for c1, v1 in enumerate(qpe_stats):
             x = (((np.deg2rad(360/len(qpe_stats)))/2)
                  + ((np.deg2rad(360/len(qpe_stats)))*c1))
-            ax2.text(x, y, f'{rprodsltx.get(v1)}', ha='center', va='center',
+            nrret = RPRODSLTX.get(v1)
+            if '&' in nrret:
+                nrret = nrret.replace('&', '$ &\n$')
+            ax2.text(x, y, f'{nrret}', ha='center', va='center',
                      size=lblsz)
 red_patch = mplptc.Patch(
     facecolor='None', edgecolor='k',
@@ -509,15 +516,17 @@ plt.show()
 if SAVE_FIGS:
     fnst = [ist[:ist.find('[')-1] if '[' in ist else ist for ist in stats2plot]
     fname = (f"devents{len(daccum)}_{rcomp}_{fnst[0]}_{fnst[1]}_24h.png")
-    plt.savefig(RES_DIR + fname, format='png')
+    plt.savefig(RES_DIR + fname, dpi=200, format='png')
 
 # %%
 # =============================================================================
 # PLOT SET OF STATS 2
 # =============================================================================
 stats2plot = ('RMSE', 'MAE')
-rgrids2 = np.arange(0, 13., 2)
-lpos2 = 14.28
+# rgrids2 = np.arange(0, 13., 2)
+# lpos2 = 14.28
+rgrids2 = np.arange(0, 21., 5)
+lpos2 = 23.8
 fig = plt.figure(figsize=fsize)
 for nps in stats2plot:
     # if stats2plot == ('R_Pearson [-]', 'KGE'):
@@ -530,7 +539,7 @@ for nps in stats2plot:
                            width=np.radians((360/len(qpe_stats))-1), bottom=0,
                            edgecolors='k', cmap=cmp, norm=dnorm[nps])
         cb = fig.colorbar(coll, orientation='vertical', location='right',
-                          fraction=0.10, shrink=0.8, extend=dnorm[nps].extend,
+                          fraction=0.10, shrink=0.7, extend=dnorm[nps].extend,
                           format=mpl.ticker.FormatStrFormatter('%.1f'),
                           pad=.13)
         coll2 = colored_bar(theta, [st[nps]
@@ -570,8 +579,13 @@ for nps in stats2plot:
         for c1, v1 in enumerate(qpe_stats):
             x = (((np.deg2rad(360/len(qpe_stats)))/2)
                  + ((np.deg2rad(360/len(qpe_stats)))*c1))
-            ax1.text(x, lpos2, f'{rprodsltx.get(v1)}', ha='center',
-                     va='center', size=lblsz)
+            # ax1.text(x, lpos2, f'{RPRODSLTX.get(v1)}', ha='center',
+            #          va='center', size=lblsz)
+            nrret = RPRODSLTX.get(v1)
+            if '&' in nrret:
+                nrret = nrret.replace('&', '$ &\n$')
+            ax1.text(x, lpos2, f'{nrret}', ha='center', va='center',
+                     size=lblsz)
     fig.legend(loc='lower left', fontsize=lblsz-1)
     if nps == 'MAE':
         ax2 = plt.subplot(122, projection='polar')
@@ -581,7 +595,7 @@ for nps in stats2plot:
                            width=np.radians((360/len(qpe_stats))-1), bottom=0,
                            edgecolors='grey', cmap=cmp, norm=dnorm[nps])
         cb = fig.colorbar(coll, orientation='vertical', location='right',
-                          fraction=0.10, shrink=0.8, extend=dnorm[nps].extend,
+                          fraction=0.10, shrink=0.7, extend=dnorm[nps].extend,
                           format=mpl.ticker.FormatStrFormatter('%.1f'),
                           pad=.13)
         coll2 = colored_bar(theta, [st[nps] for k, st in qpe_stats2.items()],
@@ -624,8 +638,13 @@ for nps in stats2plot:
         for c1, v1 in enumerate(qpe_stats):
             x = (((np.deg2rad(360/len(qpe_stats)))/2)
                  + ((np.deg2rad(360/len(qpe_stats)))*c1))
-            ax2.text(x, lpos2, f'{rprodsltx.get(v1)}', ha='center',
-                     va='center', size=lblsz)
+            # ax2.text(x, lpos2, f'{RPRODSLTX.get(v1)}', ha='center',
+            #          va='center', size=lblsz)
+            nrret = RPRODSLTX.get(v1)
+            if '&' in nrret:
+                nrret = nrret.replace('&', '$ &\n$')
+            ax2.text(x, lpos2, f'{nrret}', ha='center', va='center',
+                     size=lblsz)
 red_patch = mplptc.Patch(
     facecolor='None', edgecolor='k',
     label=f'[{rcomp2.replace("rcomp_qpe", "QPE").upper()}]')
@@ -636,7 +655,7 @@ plt.show()
 if SAVE_FIGS:
     fnst = [ist[:ist.find('[')-1] if '[' in ist else ist for ist in stats2plot]
     fname = (f"devents{len(daccum)}_{rcomp}_{fnst[0]}_{fnst[1]}_24h.png")
-    plt.savefig(RES_DIR + fname, format='png')
+    plt.savefig(RES_DIR + fname, dpi=200, format='png')
 
 # %%
 # =============================================================================
@@ -653,7 +672,7 @@ for nps in stats2plot:
                            width=np.radians((360/len(qpe_stats))-1), bottom=0,
                            edgecolors='k', cmap=cmp, norm=dnorm[nps])
         cb = fig.colorbar(coll, orientation='vertical', location='right',
-                          fraction=0.10, shrink=0.8, extend=dnorm[nps].extend,
+                          fraction=0.10, shrink=0.7, extend=dnorm[nps].extend,
                           format=mpl.ticker.FormatStrFormatter('%.0f'),
                           pad=.13)
         cb.ax.tick_params(labelsize=lblsz)
@@ -692,7 +711,12 @@ for nps in stats2plot:
         for c1, v1 in enumerate(qpe_stats):
             x = (((np.deg2rad(360/len(qpe_stats)))/2)
                  + ((np.deg2rad(360/len(qpe_stats)))*c1))
-            ax1.text(x, y, f'{rprodsltx.get(v1)}', ha='center', va='center',
+            # ax1.text(x, y, f'{RPRODSLTX.get(v1)}', ha='center', va='center',
+            #          size=lblsz)
+            nrret = RPRODSLTX.get(v1)
+            if '&' in nrret:
+                nrret = nrret.replace('&', '$ &\n$')
+            ax1.text(x, y, f'{nrret}', ha='center', va='center',
                      size=lblsz)
     fig.legend(loc='lower left', fontsize=lblsz-1)
     if nps == 'NMB [%]':
@@ -703,7 +727,7 @@ for nps in stats2plot:
                            width=np.radians((360/len(qpe_stats))-1), bottom=0,
                            edgecolors='k', cmap=cmp, norm=dnorm[nps])
         cb = fig.colorbar(coll, orientation='vertical', location='right',
-                          fraction=0.10, shrink=0.8, extend=dnorm[nps].extend,
+                          fraction=0.10, shrink=0.7, extend=dnorm[nps].extend,
                           format=mpl.ticker.FormatStrFormatter('%.0f'),
                           pad=.13)
         cb.ax.tick_params(labelsize=lblsz)
@@ -738,26 +762,33 @@ for nps in stats2plot:
         # cb.set_label(f'\n[{rcomp.replace("rcomp_qpe", "QPE").upper()}]',
         #              rotation=90, size=16)
         if nps == 'NMB [%]':
-            plt.rgrids(np.arange(-50, 60, 25), angle=0, size=lblsz, fmt='%.1f',
+            plt.rgrids(np.arange(-50, 60, 25), angle=0, size=lblsz, fmt='%.0f',
                        c='k')
             y = 69
             plt.polar(theta3, np.zeros_like(theta3), 'k--')
         for c1, v1 in enumerate(qpe_stats):
             x = (((np.deg2rad(360/len(qpe_stats)))/2)
                  + ((np.deg2rad(360/len(qpe_stats)))*c1))
-            ax2.text(x, y, f'{rprodsltx.get(v1)}', ha='center', va='center',
+            # ax2.text(x, y, f'{RPRODSLTX.get(v1)}', ha='center', va='center',
+            #          size=lblsz)
+            nrret = RPRODSLTX.get(v1)
+            if '&' in nrret:
+                nrret = nrret.replace('&', '$ &\n$')
+            ax2.text(x, y, f'{nrret}', ha='center', va='center',
                      size=lblsz)
 red_patch = mplptc.Patch(
     facecolor='None', edgecolor='k',
     label=f'[{rcomp2.replace("rcomp_qpe", "QPE").upper()}]')
 fig.legend(handles=[red_patch], loc="lower right", fontsize=lblsz)
+# plt.subplots_adjust(top=0.945, bottom=0.017, left=0.061, right=0.985,
+#                     wspace=0.200, hspace=0.159)
 plt.tight_layout()
 plt.show()
 
 if SAVE_FIGS:
     fnst = [ist[:ist.find('[')-1] if '[' in ist else ist for ist in stats2plot]
     fname = (f"devents{len(daccum)}_{rcomp}_{fnst[0]}_{fnst[1]}_24h.png")
-    plt.savefig(RES_DIR + fname, format='png')
+    plt.savefig(RES_DIR + fname, dpi=200, format='png')
 
 # if SAVE_FIGS:
 #     if '[' in stat2plot:

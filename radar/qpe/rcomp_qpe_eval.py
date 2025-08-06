@@ -40,15 +40,15 @@ START_TIME = dt.datetime(2018, 5, 16, 0, 0)  # 24h []
 # START_TIME = dt.datetime(2018, 12, 2, 0, 0)  # 24 h [NO JXP]
 # START_TIME = dt.datetime(2019, 5, 8, 0, 0)  # 24h [NO JXP]
 # # START_TIME = dt.datetime(2019, 5, 11, 0, 0)  # 24h [NO JXP]
-# START_TIME = dt.datetime(2019, 7, 20, 8, 0)  # 16h [NO BXP]
+START_TIME = dt.datetime(2019, 7, 20, 8, 0)  # 16h [NO BXP]
 # START_TIME = dt.datetime(2020, 6, 17, 0, 0)  # 24h [NO BXP]
 # START_TIME = dt.datetime(2021, 7, 13, 0, 0)  # 24h [NO BXP]
 # START_TIME = dt.datetime(2021, 7, 14, 0, 0)  # 24h [NO BXP]
 
 rcomp = 'rcomp_qpe_dwd'
 # rcomp = 'rcomp_qpe_dwdbxp'
-# rcomp = 'rcomp_qpe_dwdjxp'
-rcomp = 'rcomp_qpe_dwdxpol'
+rcomp = 'rcomp_qpe_dwdjxp'
+# rcomp = 'rcomp_qpe_dwdxpol'
 # rcomp = 'rcomp_qpe_xpol'
 
 xlims, ylims = [4.324, 10.953], [48.635, 52.754]  # DWDXPOL RADCOV

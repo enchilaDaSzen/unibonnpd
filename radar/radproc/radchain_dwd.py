@@ -85,13 +85,14 @@ if PLOT_METHODS:
 # =============================================================================
 # rhoHV noise-correction
 # =============================================================================
-if START_TIME.year >= 2021:
-    rhohv_theo, noise_lvl = (0.95, 1.), (32, 35, 0.01)  # 12 deg
-else:
-    rhohv_theo, noise_lvl = (0.95, 1.), (28, 33, 0.01)  # 12 deg
-rhohv_theo, noise_lvl = (0.90, 1.1), (36, 42, 0.01)  # precip_scan
-# rhohv_theo, noise_lvl = (0.90, 1.1), None  # precip_scan
+# if START_TIME.year >= 2021:
+#     rhohv_theo, noise_lvl = (0.95, 1.), (32, 35, 0.01)  # 12 deg
+# else:
+#     rhohv_theo, noise_lvl = (0.95, 1.), (28, 33, 0.01)  # 12 deg
+# rhohv_theo, noise_lvl = (0.90, 1.1), (36, 42, 0.01)  # precip_scan
 rcrho = tpx.rhoHV_Noise_Bias(rdata)
+rhohv_theo = RPARAMS[rcrho.site_name]['rhvtc']
+noise_lvl = RPARAMS[rcrho.site_name]['nlvl']
 rcrho.iterate_radcst(rdata.georef, rdata.params, rdata.vars,
                      rhohv_theo=rhohv_theo, noise_lvl=noise_lvl,
                      data2correct=rdata.vars, plot_method=PLOT_METHODS)
@@ -107,7 +108,6 @@ if PLOT_METHODS:
 # Noise suppression
 # =============================================================================
 rsnr = tp.eclass.snr.SNR_Classif(rdata)
-# print(f"minSNR = {rcrho.rhohv_corrs['Noise level [dB]']:.2f}")
 if rdata.params['radar constant [dB]'] <= 0:
     min_snr = -rcrho.rhohv_corrs['Noise level [dB]']
 else:
@@ -123,19 +123,14 @@ if PLOT_METHODS:
 # =============================================================================
 # PhiDP quality control and processing
 # =============================================================================
-
-# rsnr.vars['PhiDP [deg]'] = np.ascontiguousarray(
-#     wrl.dp.unfold_phi(rsnr.vars['PhiDP [deg]'],
-#                       rsnr.vars['rhoHV [-]'],
-#                       width=1, copy=True).astype(np.float64))
-
 ropdp = tp.calib.calib_phidp.PhiDP_Calibration(rdata)
 ropdp.offsetdetection_ppi(rsnr.vars, preset=None, mode='median')
 # ropdp.phidp_offset = 40
-print(f'Phi_DP(0) = {np.median(ropdp.phidp_offset):.2f}')
-ropdp.offset_correction(rsnr.vars['PhiDP [deg]'],
-                        phidp_offset=ropdp.phidp_offset,
-                        data2correct=rsnr.vars)
+# print(f'Phi_DP(0) = {np.median(ropdp.phidp_offset):.2f}')
+print(f'Phi_DP(0) = {ropdp.phidp_offset:.2f}')
+ropdp.offset_correction(
+    rsnr.vars['PhiDP [deg]'], phidp_offset=ropdp.phidp_offset,
+    data2correct=rsnr.vars)
 # PLOT_METHODS = True
 if PLOT_METHODS:
     tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params, rsnr.vars,
@@ -154,29 +149,28 @@ if PLOT_METHODS:
 
 # %%
 # =============================================================================
-# Clutter identification and removal
+# Non-meteorological echoes identification and removal
 # =============================================================================
-rdata2 = tpx.Rad_scan(LPFILE, f'{RADAR_SITE}')
 # DWD clutter map is not always available, these lines try to read such data
+rdata2 = tpx.Rad_scan(LPFILE, f'{RADAR_SITE}')
 try:
     rdata2.ppi_dwd(get_rvar='cmap')
-
     cmap = 1 - tp.utils.radutilities.normalisenanvalues(
-        rdata2.vars['cmap [0-1]'], np.nanmin(rdata2.vars['cmap [0-1]']),
-        np.nanmax(rdata2.vars['cmap [0-1]']))
-    cmap = np.nan_to_num(cmap, nan=1e-5)
-    bclass = 207
+        rdata2.vars['cmap [class]'], np.nanmin(rdata2.vars['cmap [class]']),
+        np.nanmax(rdata2.vars['cmap [class]']))
+    cmap, bclass = np.nan_to_num(cmap, nan=1e-5), 207
     pass
 except Exception:
-    cmap = None
-    bclass = 207 - 64
+    cmap, bclass = None, 207 - 64
     print('No CL Map available')
     pass
 
 rnme = tp.eclass.nme.NME_ID(ropdp)
+# Despeckle and removal of linear signatures
 rnme.lsinterference_filter(rdata.georef, rdata.params, ropdp.vars,
                            rhv_min=0.3, data2correct=ropdp.vars,
                            plot_method=PLOT_METHODS)
+# Clutter ID and removal
 rnme.clutter_id(rdata.georef, rdata.params, rnme.vars, binary_class=bclass,
                 min_snr=rsnr.min_snr, clmap=cmap, data2correct=rnme.vars,
                 plot_method=PLOT_METHODS)
@@ -195,7 +189,7 @@ rmlyr.ml_top = 3.2
 rmlyr.ml_bottom = 1.6
 rmlyr.ml_thickness = rmlyr.ml_top - rmlyr.ml_bottom
 
-rmlyr.ml_ppidelimitation(rdata.georef, rdata.params, rsnr.vars, 
+rmlyr.ml_ppidelimitation(rdata.georef, rdata.params, rsnr.vars,
                          plot_method=PLOT_METHODS)
 
 if PLOT_METHODS:
@@ -252,7 +246,7 @@ rzhah.ah_zh(rattc.vars, zh_upper_lim=55, temp=temp, rband='C',
             copy_ofr=True, data2correct=rattc.vars)
 rattc.vars['ZH* [dBZ]'] = rzhah.vars['ZH [dBZ]']
 
-mov_avrgf_len = (1, 3)
+mov_avrgf_len = (1, 5)                                                                            
 zh_difnan = np.where(rzhah.vars['diff [dBZ]'] == 0, np.nan,
                      rzhah.vars['diff [dBZ]'])
 zhpdiff = np.array([np.nanmedian(i) if ~np.isnan(np.nanmedian(i))
@@ -329,6 +323,29 @@ if PLOT_METHODS:
         rdata.georef, rdata.params, rattc.vars, rattc.vars,
         var2plot1='KDP* [deg/km]', var2plot2='KDP+ [deg/km]',
         diff_lims=[-1, 1, .25], vars_bounds={'KDP [deg/km]': (-1, 3, 17)})
+
+
+# %%
+
+# alphazdr = 0.0169
+# betazdr = 1.345
+# adp_tan1995 = {}
+# for k1, robj in rattc.items():
+#     if rbands[robj.site_name] == 'C':
+#         adp_tan1995[k1] = {'ADP [dB/km]':
+#                            alphazdr*robj.vars['KDP+ [deg/km]']**betazdr}
+# for k1, robj in adp_tan1995.items():
+#     robj['ADP [dB/km]'] = np.where(
+#         rmlyr[k1].mlyr_limits['pcp_region [HC]'] == 1, robj['ADP [dB/km]'], 0)
+#     robj['ADP [dB/km]'] = np.where(
+#         rnme[k1].nme_classif['classif [EC]'] != 0, np.nan, robj['ADP [dB/km]'])
+
+# [tp.datavis.rad_display.plot_ppidiff(
+#     robj.georef, robj.params, rattc[k1].vars, adp_tan1995[k1],
+#     var2plot1='ADP [dB/km]', var2plot2='ADP [dB/km]',
+#     diff_lims=[-1, 1, 0.1], vars_bounds={'KDP [deg/km]': (-0.5, 1.5, 17)})
+#  for k1, robj in rdata.items() if rbands[robj.site_name] == 'C']
+
 
 # %%
 # =============================================================================
@@ -505,7 +522,7 @@ tp.datavis.rad_interactive.ppi_base(
     # rattc.vars,
     # rd_qcatc.vars,
     # var2plot='snr [dB]',
-    # var2plot='cmap [0-1]',
+    # var2plot='cmap [class]',
     # var2plot='rhoHV [-]',
     # var2plot='KDP* [deg/km]',
     # var2plot='alpha [-]',

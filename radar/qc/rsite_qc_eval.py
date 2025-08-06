@@ -53,7 +53,7 @@ EWDIR = '/run/media/dsanchez/PSDD1TB/safe/bonn_postdoc/'
 # =============================================================================
 # Choose only one site at a time
 # Boxpol, Juxpol, Essen, Flechtdorf, Neuheilenbach, Offenthal
-RSITE = 'Juxpol'
+RSITE = 'Essen'
 RPARAMS = [next(item for item in RPARAMS if item['site_name'] == RSITE)]
 
 # =============================================================================
@@ -197,6 +197,7 @@ kdpp_all = []
 zha_all = []
 zhp_all = []
 zdr_all = []
+zhp_stats = []
 # alpha_mean = []
 
 # iraf = RDQC_FILES[210]
@@ -256,6 +257,7 @@ for cnt, iraf in enumerate(tqdm(RDQC_FILES, desc='Gathering radar vars')):
                 kdpa_data = resattc.vars[kdpa]
                 kdpp_data = resattc.vars[kdpp]
                 zha_data = resattc.vars[zha]
+                zhp_data = resattc.vars[zhp]
                 zdr_data = resattc.vars[zdra]
             adp_all.append(adp_data)
             ah_all.append(ah_data)
@@ -280,6 +282,13 @@ zdr_all = np.vstack(zdr_all)
 lblsize = 18
 tcksize = 14
 cmap = 'Spectral_r'
+
+if RSITE.lower() == 'juxpol':
+    RSITET = 'JuXPol'
+elif RSITE.lower() == 'boxpol':
+    RSITET = 'BoXPol'
+else:
+    RSITET  = RSITE
 
 zh_fc = True
 
@@ -318,7 +327,7 @@ plt.style.use('default')
 lbl_size = 14
 lbl_size2 = 12
 fig, axs = plt.subplots(3, 2, figsize=(19.2, 11.4), sharex=False)
-fig.suptitle(f"{RSITE} -- {START_TIME.strftime('%Y-%m-%d')} {EVNTD_HRS}H",
+fig.suptitle(f"{RSITET} -- {START_TIME.strftime('%Y-%m-%d')} {EVNTD_HRS}H",
              fontsize=16)
 
 # =============================================================================
@@ -349,7 +358,7 @@ ax.set_xlabel('$Z_H$ [dBZ]', fontsize=lbl_size)
 ax.set_ylabel('$A_H$ [dB/km]', fontsize=lbl_size)
 ax.legend(loc='upper left', fontsize=lbl_size)
 ax.grid()
-ax.set_axisbelow(True)
+# ax.set_axisbelow(True)
 
 # =============================================================================
 # ZH_KDP
@@ -360,9 +369,12 @@ hxb = ax.hexbin(np.ma.masked_invalid(zh4plots.ravel()),
                 np.ma.masked_invalid(kdpa_all.ravel()),
                 gridsize=gridsize, mincnt=1, cmap=cmap, norm=n1)
 if rband == 'X':
+    # ax.plot(zhkdpii, kdpmean_ii, c='k', ls='--',
+    #         label=f'$K^{{mean}}_{{DP}}={kdpmean_a:,.2e}'
+    #         + f'Z_{{H}}^{{{kdpmean_b:,.2f}}}$ [Ryzhkov A.]')
     ax.plot(zhkdpii, kdpmean_ii, c='k', ls='--',
             label=f'$K^{{mean}}_{{DP}}={kdpmean_a:,.2e}'
-            + f'Z_{{H}}^{{{kdpmean_b:,.2f}}}$ [Ryzhkov A.]')
+            + f'Z_{{H}}^{{{kdpmean_b:,.2f}}}$')
 ax_divider = make_axes_locatable(ax)
 cax = ax_divider.append_axes("top", size="7%", pad="2%")
 cb = fig.colorbar(hxb, cax=cax, extend='max', orientation='horizontal')
@@ -379,7 +391,7 @@ ax.set_xlabel('$Z_{H}$ [dBZ]', fontsize=lbl_size)
 ax.set_ylabel('$K_{DP}$ [deg/km]', fontsize=lbl_size)
 ax.legend(fontsize=lbl_size)
 ax.grid()
-ax.set_axisbelow(True)
+# ax.set_axisbelow(True)
 
 # =============================================================================
 # ZH_ZDR
@@ -408,7 +420,7 @@ ax.set_xlabel('$Z_H$ [dBZ]', fontsize=lbl_size)
 ax.set_ylabel('$Z_{DR}$ [dB]', fontsize=lbl_size)
 ax.legend(loc='upper left', fontsize=lbl_size)
 ax.grid()
-ax.set_axisbelow(True)
+# ax.set_axisbelow(True)
 
 # =============================================================================
 # ZDR_KDP/ZH
@@ -475,7 +487,7 @@ ax.set_ylabel('$K_{DP}/Z_{h}$ [dB/km]', fontsize=lbl_size)
 ax.tick_params(axis='both', which='major', labelsize=lbl_size2)
 ax.legend(loc='upper right', fontsize=lbl_size)
 ax.grid()
-ax.set_axisbelow(True)
+# ax.set_axisbelow(True)
 
 # =============================================================================
 # KDP_AH
@@ -501,7 +513,7 @@ ax.tick_params(axis='both', which='major', labelsize=lbl_size2)
 # ax.set_ylim([0, 0.75])
 ax.legend(loc='upper left', fontsize=lbl_size)
 ax.grid()
-ax.set_axisbelow(True)
+# ax.set_axisbelow(True)
 
 # =============================================================================
 # KDP_ADP
@@ -526,7 +538,7 @@ ax.set_ylim(adplims)
 ax.tick_params(axis='both', which='major', labelsize=lbl_size2)
 ax.legend(loc='upper left', fontsize=lbl_size)
 ax.grid()
-ax.set_axisbelow(True)
+# ax.set_axisbelow(True)
 
 # =============================================================================
 # ZDR_AH
@@ -601,4 +613,4 @@ if SAVE_FIGS:
     RES_DIR2 = RES_DIR.replace('rsite_qpe', 'rsite_dailyqc')
     fname = (f"{START_TIME.strftime('%Y%m%d')}"
              + f"_{RPARAMS[0]['site_name'][:3].lower()}_daily_rvars{sfx}.png")
-    plt.savefig(RES_DIR2 + fname, format='png')
+    plt.savefig(RES_DIR2 + fname, format='png', dpi=200)

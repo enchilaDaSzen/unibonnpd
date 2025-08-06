@@ -363,6 +363,157 @@ def mstats(estimates, target, rmse_norm='std'):
     return dstats
 
 
+def heatmap(data, row_labels, col_labels, ax=None,
+            cbar_kw=None, cbarlabel="", **kwargs):
+    """
+    Create a heatmap from a numpy array and two lists of labels.
+
+    Parameters
+    ----------
+    data
+        A 2D numpy array of shape (M, N).
+    row_labels
+        A list or array of length M with the labels for the rows.
+    col_labels
+        A list or array of length N with the labels for the columns.
+    ax
+        A `matplotlib.axes.Axes` instance to which the heatmap is plotted.  If
+        not provided, use current Axes or create a new one.  Optional.
+    cbar_kw
+        A dictionary with arguments to `matplotlib.Figure.colorbar`.  Optional.
+    cbarlabel
+        The label for the colorbar.  Optional.
+    **kwargs
+        All other arguments are forwarded to `imshow`.
+    """
+    if ax is None:
+        ax = plt.gca()
+
+    if cbar_kw is None:
+        cbar_kw = {}
+
+    # Plot the heatmap
+    im = ax.imshow(data, **kwargs)
+
+    # Create colorbar
+    cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
+    cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom", fontsize=16)
+    # cbar.ax.set_title(cbarlabel, rotation=0, va="bottom", fontsize=16)
+    cbar.ax.tick_params(labelsize=14)
+    # Show all ticks and label them with the respective list entries.
+    ax.set_xticks(range(data.shape[1]), labels=col_labels,
+                  rotation=0, ha="center", rotation_mode="anchor")
+    ax.set_yticks(range(data.shape[0]), labels=row_labels)
+
+    # Let the horizontal axes labeling appear on top.
+    # ax.tick_params(top=True, bottom=False,
+    #                labeltop=True, labelbottom=False)
+    ax.tick_params(top=False, bottom=True,
+                   labeltop=False, labelbottom=True)
+
+    # Turn spines off and create white grid.
+    ax.spines[:].set_visible(False)
+
+    ax.set_xticks(np.arange(data.shape[1]+1)-.5, minor=True)
+    ax.set_yticks(np.arange(data.shape[0]+1)-.5, minor=True)
+    ax.grid(which="minor", color="w", linestyle='-', linewidth=5)
+    ax.tick_params(which="minor", bottom=False, left=False)
+    # ax.set_aspect('auto')
+
+    return im, cbar
+
+
+def annotate_heatmap(im, data=None, valfmt="{x:.2f}", valnan='n/a',
+                     threshold=None, textcolors=("white", "black"), **textkw):
+    """
+    A function to annotate a heatmap.
+
+    Parameters
+    ----------
+    im
+        The AxesImage to be labeled.
+    data
+        Data used to annotate. If None, the image's data is used. Optional.
+    valfmt
+        The format of the annotations inside the heatmap. This should either
+        use the string format method, e.g. "$ {x:.2f}", or be a
+        `matplotlib.ticker.Formatter`.  Optional.
+    threshold
+        Value in data units according to which the colors from textcolors are
+        applied.  If None (the default) uses the middle of the colormap as
+        separation.  Optional.
+    textcolors
+        A pair of colors.  The first is used for values below a threshold,
+        the second for those above.  Optional.
+    **kwargs
+        All other arguments are forwarded to each call to `text` used to create
+        the text labels.
+    """
+    import matplotlib.ticker as mticker
+
+    if not isinstance(data, (list, np.ndarray)):
+        data = im.get_array()
+
+    # Normalize the threshold to the images color range.
+    if threshold is not None:
+        threshold = im.norm(threshold)
+    else:
+        threshold = im.norm(data.max())/2.
+
+    # Set default alignment to center, but allow it to be
+    # overwritten by textkw.
+    kw = dict(horizontalalignment="center",
+              verticalalignment="center")
+    kw.update(textkw)
+
+    # # Wrap string format into Formatter
+    # if isinstance(valfmt, str):
+    #     user_fmt = valfmt  # Store string for use in safe_format
+    #     def safe_format(x, pos):
+    #         return valnan if np.ma.is_masked(x) or np.isnan(x) else user_fmt.format(x=x)
+    #     valfmt = mticker.FuncFormatter(safe_format)
+    # elif isinstance(valfmt, mticker.Formatter):
+    #     # If a Formatter object is passed, wrap it with NaN-safe logic
+    #     def safe_format(x, pos):
+    #         return valnan if np.ma.is_masked(x) or np.isnan(x) else valfmt(x, pos)
+    #     valfmt = mticker.FuncFormatter(safe_format)
+    # else:
+    #     raise TypeError("valfmt must be a format string or Formatter object.")
+
+    # Get the formatter in case a string is supplied
+    if isinstance(valfmt, str):
+        user_fmt = valfmt
+
+        def safe_format(x, pos):
+            if np.ma.is_masked(x) or np.isnan(x):
+                return valnan
+            try:
+                return user_fmt.format(x=int(x)) if 'd' in user_fmt else user_fmt.format(x=x)
+            except (ValueError, TypeError):
+                return valnan
+        valfmt = mticker.FuncFormatter(safe_format)
+    elif isinstance(valfmt, mticker.Formatter):
+
+        def safe_format(x, pos):
+            if np.ma.is_masked(x) or np.isnan(x):
+                return valnan
+            try:
+                return valfmt(x, pos)
+            except Exception:
+                return valnan
+        valfmt = mticker.FuncFormatter(safe_format)
+
+    # Loop over the data and create a `Text` for each "pixel".
+    # Change the text's color depending on the data.
+    texts = []
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            kw.update(color=textcolors[int(im.norm(data[i, j]) > threshold)])
+            text = im.axes.text(j, i, valfmt(data[i, j], None), **kw)
+            texts.append(text)
+
+    return texts
+
 # =============================================================================
 # io
 # =============================================================================
@@ -960,14 +1111,15 @@ class Rad_scan:
                                                    angle_res=1.0, direction=1))
         wrobj.wrl.georef.georeference(crs=wrl.georef.get_earth_projection())
         if get_rvar == 'pvars' or get_rvar == 'all':
-            if (get_rawvars and 'URHOHV' not in wrobj.keys()
-               and 'RHOHV' in wrobj.keys()):
-                radvars['RHOHV'] = radvars.pop('URHOHV')
-                warnings.warn('URHOHV not in data file')
             if (get_rawvars and 'UPHIDP' not in wrobj.keys()
                and 'PHIDP' in wrobj.keys()):
                 radvars['PHIDP'] = radvars.pop('UPHIDP')
                 warnings.warn('UPHIDP not in data file')
+            if (get_rawvars and 'URHOHV' not in wrobj.keys()
+               and 'RHOHV' in wrobj.keys()):
+                radvars['RHOHV'] = radvars.pop('URHOHV')
+                warnings.warn('URHOHV not in data file')
+            radvars['VRADH'] = radvars.pop('VRADH')
         else:
             avars = {k: k in list(wrobj.keys()) for k in get_rvar}
             if not all(k in list(wrobj.keys()) for k in get_rvar):
@@ -1168,7 +1320,7 @@ class Rad_scan:
                      'cflags': {'raw': False, 'default': False,
                                 'tpkey': 'cflags [class]'},
                      'cmap': {'raw': False, 'default': False,
-                              'tpkey': 'cmap [0-1]'},
+                              'tpkey': 'cmap [class]'},
                      'cpah': {'raw': False, 'default': False,
                               'tpkey': 'cpah [0-1]'},
                      'cpav': {'raw': False, 'default': False,

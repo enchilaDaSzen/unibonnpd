@@ -3,7 +3,7 @@
 """
 Created on Wed Oct 12 20:16:22 2022
 
-@author: enchiladaszen
+@author: dsanchez
 """
 import os
 import copy
@@ -24,18 +24,20 @@ from radar.rparams_dwdxpol import RPARAMS
 # Define working directory, and date-time
 # =============================================================================
 START_TIME = dt.datetime(2017, 7, 19, 19, 0)  # 12hr [NO JXP]
-# START_TIME = dt.datetime(2017, 7, 24, 0, 0)  # 24hr [NO JXP]
-START_TIME = dt.datetime(2017, 7, 25, 17, 0)  # 24hr [NO JXP]
-START_TIME = dt.datetime(2018, 5, 16, 17, 0)  # 24hr []
-START_TIME = dt.datetime(2018, 9, 23, 16, 30)  # 24 hr [NO JXP]
+START_TIME = dt.datetime(2017, 7, 24, 0, 0)  # 24hr [NO JXP]
+# START_TIME = dt.datetime(2017, 7, 25, 17, 0)  # 24hr [NO JXP]
+# START_TIME = dt.datetime(2018, 5, 16, 17, 0)  # 24hr []
+# START_TIME = dt.datetime(2018, 9, 23, 16, 30)  # 24 hr [NO JXP]
+# START_TIME = dt.datetime(2019, 4, 3, 10, 38)  # 24 hr [NO JXP]
 # START_TIME = dt.datetime(2019, 5, 8, 14, 30)  # 24 hr [NO JXP]
 # START_TIME = dt.datetime(2019, 5, 11, 4, 0)  # 24hr [NO JXP]
 # START_TIME = dt.datetime(2019, 7, 20, 14, 30)  # 16 hr [NO BXP]
 # START_TIME = dt.datetime(2020, 6, 17, 0, 0)  # 24 hr [NO BXP]
-START_TIME = dt.datetime(2021, 2, 6, 10, 40)  # 24 hr [NO BXP]
-# START_TIME = dt.datetime(2021, 7, 13, 0, 0)  # 24 hr []
-# START_TIME = dt.datetime(2021, 7, 14, 10, 10)  # 24 hr [NO BXP]
+# START_TIME = dt.datetime(2021, 2, 6, 10, 40)  # 24 hr [NO BXP]
+# START_TIME = dt.datetime(2021, 7, 13, 21, 0)  # 24 hr []
 START_TIME = dt.datetime(2021, 7, 14, 17, 40)  # 24 hr [NO BXP]
+# START_TIME = dt.datetime(2023, 12, 23, 18, 0)  # 24 hr
+# START_TIME = dt.datetime(2024, 5, 17, 0, 0)  # 24 hr
 
 STOP_TIME = START_TIME+dt.timedelta(minutes=5)
 
@@ -53,10 +55,14 @@ CLM_DIR = (LWDIR + 'codes/github/unibonnpd/radar/nme/xpol_clm/')
 # Define radar sites and list files
 # =============================================================================
 RSITES = ['Boxpol', 'Juxpol']
+RSITES = ['ASR Borkum', 'Boostedt', 'Dresden', 'Eisberg', 'Essen', 'Feldberg',
+          'Flechtdorf', 'Hannover', 'Isen', 'Memmingen', 'Neuhaus',
+          'Neuheilenbach', 'Offenthal', 'Protzel', 'Rostock', 'Turkheim',
+          'Ummendorf']
 RSITES = ['Essen', 'Flechtdorf', 'Neuheilenbach', 'Offenthal']
-RSITES = ['Boxpol', 'Juxpol', 'Essen', 'Flechtdorf', 'Neuheilenbach',
-          'Offenthal']
-RSITES = ['Juxpol', 'Essen']
+# RSITES = ['Boxpol', 'Juxpol', 'Essen', 'Flechtdorf', 'Neuheilenbach',
+#           'Offenthal']
+RSITES = ['Juxpol', 'Essen', 'Flechtdorf', 'Neuheilenbach', 'Offenthal']
 
 RPARAMS = {rs['site_name']: rs for rs in RPARAMS if rs['site_name'] in RSITES}
 
@@ -74,21 +80,28 @@ COMPOSITE = True
 # Set parameters related to QC
 # =============================================================================
 max_diffdtmin = 120
-qpe_amlb = False
+
+# =============================================================================
+# MODIFIES DEFAULT PARAMETERS IN THE RPARAMS DICT
+# =============================================================================
+# Useful to modify default parameters, for example the MLH
+# for rk1, rp1 in RPARAMS.items():
+#     if rk1 == 'Essen':
+#         rp1['mlt'] = 3.82
+#         rp1['mlk'] = 1.00
+#     elif rk1 == 'Juxpol':
+#         rp1['mlt'] = 3.49
+#         rp1['mlk'] = 1.17
 
 # =============================================================================
 # Set plotting parameters
 # =============================================================================
 PLOT_METHODS = False
 
-# xlims, ylims = [4.3, 9.2], [52.75, 48.75]  # XPOL NRW
-# xlims, ylims = [4.3, 16.5], [55.5, 46.5]  # Germany
-# xlims, ylims = [4.3, 11.], [48.5, 52.8]  # DWDXPOL COV
-# xlims, ylims = [4.15, 11.], [48.55, 52.75]  # DWDXPOL RADCOV
-# xlims, ylims = [5.9, 10.5], [49., 52.5]  # PAPER
-xlims, ylims = [4.324, 10.953], [48.635, 52.754]  # DWDXPOL RADCOV
-fig_size = (13, 7)
-xlims, ylims = [5.85, 11.], [48.55, 52.75]  # DWDXPOL DE
+xlims, ylims = [4.44, 16.08], [55.53, 46.52]  # DWD COMPLETE RADCOV
+xlims, ylims = [5.85, 15.04], [55.05, 47.27]  # DWD RADCOV_Germany
+# xlims, ylims = [4.324, 10.953], [48.635, 52.754]  # DWDXPOL COMPLETE RADCOV
+# xlims, ylims = [5.85, 11.], [48.55, 52.75]  # DWDXPOL RADCOV_GERMANY
 fig_size = (10.5, 7)
 
 # %%
@@ -100,28 +113,33 @@ appx = ''  # _extmlyr
 PROFSDATA = LWDIR + (f"pd_rdres/qvps_d4calib{appx}/"
                      + f"{START_TIME.strftime('%Y%m%d')}/")
 
+if not os.path.exists(PROFSDATA):
+    PROFSDATA = None
+
 RCAL_FILES = {k1: [PROFSDATA+n for n in sorted(os.listdir(PROFSDATA))
               if data4calib in n and k1 in n] for k1, rs in RPARAMS.items()}
 
 profs_data = {}
 for k1, rs in RCAL_FILES.items():
-    with open(rs[0], 'rb') as breader:
-        profs_data[k1] = pickle.load(breader)
+    if rs:
+        with open(rs[0], 'rb') as breader:
+            profs_data[k1] = pickle.load(breader)
+    else:
+        profs_data[k1] = {}
 
 mlt_avg = {k1: np.nanmean([i.ml_top for i in profs_data[k1]['mlyr']])
-           for k1, v1 in profs_data.items()}
+           if v1 else np.nan for k1, v1 in profs_data.items()}
 mlk_avg = {k1: np.nanmean([i.ml_thickness for i in profs_data[k1]['mlyr']])
-           for k1, v1 in profs_data.items()}
+           if v1 else np.nan for k1, v1 in profs_data.items()}
 
 mlyrhv = {k1: [i for i in v1['mlyr'] if ~np.isnan(i.ml_top)]
-          for k1, v1 in profs_data.items()}
-phidpOv = {k1: [i for i in v1['phidpO'] if ~np.isnan(i.phidp_offset)]
-           for k1, v1 in profs_data.items()}
-zdrOv = {k1: [i for i in v1['zdrO'] if ~np.isnan(i.zdr_offset)]
-         for k1, v1 in profs_data.items()}
-
+          if v1 else [] for k1, v1 in profs_data.items()}
 mlyrhv = {k1: (v1 if v1 else [profs_data[k1]['mlyr'][0]])
-          for k1, v1 in mlyrhv.items()}
+          if v1 else [] for k1, v1 in mlyrhv.items()}
+phidpOv = {k1: [i for i in v1['phidpO'] if ~np.isnan(i.phidp_offset)]
+           if v1 else [] for k1, v1 in profs_data.items()}
+zdrOv = {k1: [i for i in v1['zdrO'] if ~np.isnan(i.zdr_offset)]
+         if v1 else [] for k1, v1 in profs_data.items()}
 
 # %%
 # =============================================================================
@@ -134,56 +152,63 @@ rdata = {k1: tpx.Rad_scan(RSITE_FILES[k1], k1)
 [robj.ppi_xpol() if robj.site_name.lower() == 'boxpol' else
  robj.ppi_xpol(scan_elev=RPARAMS[k1]['elev'])
  if robj.site_name.lower() == 'juxpol'
- else robj.ppi_dwd() for k1, robj in rdata.items()]
+ else robj.ppi_dwd('all') for k1, robj in rdata.items()]
 
 rbands = {k1: RPARAMS[k1]['rband'] for k1, robj in rdata.items()}
 
-if PLOT_METHODS:
-    tp.datavis.rad_display.plot_mgrid(
-        [i.georef for k, i in rdata.items()],
-        [i.params for k, i in rdata.items()],
-        [i.vars for k, i in rdata.items()], ncols=3, nrows=2,
-        cpy_feats={'status': True}, proj_suffix='utm',
-        data_proj=ccrs.UTM(zone=32), xlims=xlims, ylims=ylims)
-[tp.datavis.rad_display.plot_setppi(robj.georef, robj.params, robj.vars)
- for k1, robj in rdata.items()]
 
+tp.datavis.rad_display.plot_mgrid(
+    [i.georef for k, i in rdata.items()],
+    [i.params for k, i in rdata.items()],
+    [i.vars for k, i in rdata.items()],  # ncols=2, nrows=1,
+    cpy_feats={'status': True}, proj_suffix='utm',
+    data_proj=ccrs.UTM(zone=32), xlims=xlims, ylims=ylims, fig_size=(18, 10))
+
+if PLOT_METHODS:
+    [tp.datavis.rad_display.plot_setppi(robj.georef, robj.params, robj.vars,
+                                        nrows=None)
+     for k1, robj in rdata.items() if k1 == 'Essen']
+    [tp.datavis.rad_display.plot_ppi(rdata[k1].georef, rdata[k1].params,
+                                     robj.vars)
+     for k1, robj in rdata.items()]
+    [tp.datavis.rad_display.plot_ppi(
+        robj.georef, robj.params, robj.vars, fig_size=fig_size, xlims=xlims,
+        ylims=ylims, proj_suffix='utm', cpy_feats={'status': True},
+        data_proj=ccrs.UTM(zone=32))
+        for k1, robj in rdata.items()]
 # %%
 # =============================================================================
 # Allocate closest dataset from QVPs (for ML, offsets, etc)
 # =============================================================================
 idx_mlh = {k1: (min(zip(range(
     len([i.scandatetime for i in mlyrhv[k1]])),
-        [i.scandatetime for i in mlyrhv[k1]]),
-    key=lambda x: (x[1] > robj.scandatetime,
-                   abs(x[1] - robj.scandatetime))) if mlyrhv[k1]
-    else (0, profs_data[k1]['mlyr'][0].scandatetime))
-    for k1, robj in rdata.items()}
+    [i.scandatetime for i in mlyrhv[k1]]),
+    key=lambda x: (x[1] > robj.scandatetime, abs(x[1] - robj.scandatetime)))
+    if mlyrhv[k1] else (0, profs_data[k1]['mlyr'][0].scandatetime))
+    if mlyrhv[k1] else () for k1, robj in rdata.items()}
 idx_phidp0 = {k1: min(zip(range(
     len([i.scandatetime for i in phidpOv[k1]])),
         [i.scandatetime for i in phidpOv[k1]]),
-    key=lambda x: (x[1] > robj.scandatetime,
-                   abs(x[1] - robj.scandatetime)))
+    key=lambda x: (x[1] > robj.scandatetime, abs(x[1] - robj.scandatetime)))
+    if phidpOv[k1] else ()
     for k1, robj in rdata.items()}
 idx_zdr0 = {k1: min(zip(range(
     len([i.scandatetime for i in zdrOv[k1]])),
         [i.scandatetime for i in zdrOv[k1]]),
-    key=lambda x: (x[1] > robj.scandatetime,
-                   abs(x[1] - robj.scandatetime)))
+    key=lambda x: (x[1] > robj.scandatetime, abs(x[1] - robj.scandatetime)))
+    if zdrOv[k1] else ()
     for k1, robj in rdata.items()}
 idx_pclass = {k1: min(zip(range(
     len(profs_data[k1]['dtrs'])), profs_data[k1]['dtrs']),
-    key=lambda x: (x[1] > robj.scandatetime,
-                   abs(x[1] - robj.scandatetime)))
+    key=lambda x: (x[1] > robj.scandatetime, abs(x[1] - robj.scandatetime)))
+    if profs_data[k1] else ()
     for k1, robj in rdata.items()}
 
-# nbins = max([robj.params['ngates'] for k1, robj in rdata.items()])
 # %%
 # =============================================================================
 # ZH offset correction
 # =============================================================================
 for k1, v1 in RPARAMS.items():
-    # ZH offset
     if 'xpol' in k1:
         # v1['zhO'] = v1['zh_offset'].get(START_TIME.strftime("%Y%m%d"))
         v1['zhO'] = 0
@@ -203,12 +228,10 @@ if PLOT_METHODS:
 # =============================================================================
 # rhoHV noise-correction
 # =============================================================================
-# noise_lvl = None
 rcrho = {k1: tpx.rhoHV_Noise_Bias(robj) for k1, robj in rdata.items()}
 [robj.iterate_radcst(
-    rdata[k1].georef, rdata[k1].params, rdata[k1].vars,  # noise_lvl=noise_lvl,
-    rhohv_theo=RPARAMS[k1]['rhvtc'],
-    noise_lvl=RPARAMS[k1]['nlvl'].get(START_TIME.strftime("%Y%m%d")),
+    rdata[k1].georef, rdata[k1].params, rdata[k1].vars,
+    rhohv_theo=RPARAMS[k1]['rhvtc'], noise_lvl=RPARAMS[k1]['nlvl'],
     data2correct=rdata[k1].vars, plot_method=PLOT_METHODS)
  for k1, robj in rcrho.items()]
 
@@ -239,8 +262,7 @@ rsnr = {k1: tp.eclass.snr.SNR_Classif(robj) for k1, robj in rcrho.items()}
 
 if PLOT_METHODS:
     [tp.datavis.rad_display.plot_ppi(rdata[k1].georef, rdata[k1].params,
-                                     robj.vars)
-     for k1, robj in rsnr.items()]
+                                     robj.vars) for k1, robj in rsnr.items()]
     [tp.datavis.rad_display.plot_setppi(rdata[k1].georef, rdata[k1].params,
                                         robj.vars)
      for k1, robj in rsnr.items()]
@@ -306,7 +328,6 @@ for k1, robj in rnme.items():
         clfmap = np.loadtxt(CLM_DIR+f'{robj.site_name.lower()}'
                             # + f'{robj.scandatetime.year}'
                             + '2021' + '_cluttermap_el0.dat')
-        # clfmap = None
     else:
         pathmfscl = None
         rdata2 = tpx.Rad_scan(RSITE_FILES[robj.site_name], robj.site_name)
@@ -315,16 +336,16 @@ for k1, robj in rnme.items():
         try:
             rdata2.ppi_dwd(get_rvar='cmap')
             clfmap = 1 - tp.utils.radutilities.normalisenanvalues(
-                rdata2.vars['cmap [0-1]'],
-                np.nanmin(rdata2.vars['cmap [0-1]']),
-                np.nanmax(rdata2.vars['cmap [0-1]']))
+                rdata2.vars['cmap [class]'],
+                np.nanmin(rdata2.vars['cmap [class]']),
+                np.nanmax(rdata2.vars['cmap [class]']))
             clfmap = np.nan_to_num(clfmap, nan=1e-5)
             RPARAMS[k1]['bclass'] = 207
             pass
         except Exception:
             clfmap = None
             RPARAMS[k1]['bclass'] = 207 - 64
-            print('No CL Map available')
+            print('CL Map not available')
             pass
     robj.lsinterference_filter(rdata[k1].georef, rdata[k1].params,
                                ropdp[k1].vars, data2correct=ropdp[k1].vars,
@@ -344,13 +365,14 @@ if PLOT_METHODS:
     [tp.datavis.rad_display.plot_setppi(rdata[k1].georef, rdata[k1].params,
                                         robj.vars)
      for k1, robj in rnme.items()]
+
 # %%
 # ============================================================================
 # Melting layer allocation
 # ============================================================================
 rmlyr = {k1: tp.ml.mlyr.MeltingLayer(robj) for k1, robj in rnme.items()}
 for k1, robj in rmlyr.items():
-    if robj.site_name in profs_data:
+    if idx_mlh[k1]:
         if ((abs((idx_mlh[k1][1] - robj.scandatetime).total_seconds())/60)
                 <= max_diffdtmin):
             robj.ml_top = mlyrhv[k1][idx_mlh[k1][0]].ml_top
@@ -373,16 +395,26 @@ for k1, robj in rmlyr.items():
             robj.ml_bottom = robj.ml_top - robj.ml_thickness
             print(f'{robj.site_name} ML_h in database lies too far,'
                   + ' using the day-average value')
+    else:
+        print(f'{robj.site_name} ML_h not in database,'
+              + ' using the preset value')
+        robj.ml_top = RPARAMS[k1]['mlt']
+        robj.ml_thickness = RPARAMS[k1]['mlk']
+        robj.ml_bottom = robj.ml_top-robj.ml_thickness
 
 [robj.ml_ppidelimitation(rdata[k1].georef, rdata[k1].params, rnme[k1].vars,
                          plot_method=PLOT_METHODS)
  for k1, robj in rmlyr.items()]
 
 if PLOT_METHODS:
+    [tp.datavis.rad_display.plot_ppi(rdata[k1].georef, rdata[k1].params,
+                                     robj.vars, mlyr=rmlyr[k1],
+                                     var2plot='rhoHV [-]')
+     for k1, robj in rnme.items()]
     tp.datavis.rad_display.plot_mgrid(
         [i.georef for k, i in rdata.items()],
         [i.params for k, i in rdata.items()],
-        [i.mlyr_limits for k, i in rmlyr.items()], ncols=3, nrows=2,
+        [i.mlyr_limits for k, i in rmlyr.items()],  # ncols=2, nrows=1,
         cpy_feats={'status': True}, proj_suffix='utm',
         data_proj=ccrs.UTM(zone=32), xlims=xlims, ylims=ylims)
 
@@ -393,23 +425,26 @@ if PLOT_METHODS:
 rozdr = {k1: tp.calib.calib_zdr.ZDR_Calibration(robj)
          for k1, robj in rmlyr.items()}
 for k1, robj in rozdr.items():
-    if robj.site_name in profs_data:
+    if idx_zdr0[k1]:
         if ((abs((idx_zdr0[k1][1] - robj.scandatetime).total_seconds())/60)
                 <= max_diffdtmin):
             robj.zdr_offset = zdrOv[k1][idx_zdr0[k1][0]].zdr_offset
             if robj.zdr_offset == 0 or np.isnan(robj.zdr_offset):
-                print(f'{robj.site_name}_ZDR offset void --'
-                      + ' using fixed value')
                 robj.zdr_offset = RPARAMS[k1]['zdr_offset']
+                print(f'{robj.site_name}_ZDR_O void: [{robj.zdr_offset} dB]'
+                      + ' -- using fixed value')
             else:
-                print(f'{robj.site_name}_ZDR_O '
+                print(f'{robj.site_name}_ZDR_O: '
                       + f'[{robj.zdr_offset:.2f} dB]')
         else:
-            print(f'{robj.site_name}_ZDR offset dt in database'
-                  + ' far too long -- using fixed value')
             robj.zdr_offset = RPARAMS[k1]['zdr_offset']
+            print(f'{robj.site_name}_ZDR_O dtvoid: [{robj.zdr_offset} dB]'
+                  + ' -- dt in database far too long, using fixed value')
     else:
-        print(f'{robj.site_name}_ZDR offset not in database')
+        robj.zdr_offset = RPARAMS[k1]['zdr_offset']
+        print(f'{robj.site_name}_ZDR_O void: [{robj.zdr_offset} dB]'
+              + ' -- using fixed value')
+
 [robj.offset_correction(rnme[k1].vars['ZDR [dB]'], zdr_offset=robj.zdr_offset,
                         data2correct=rnme[k1].vars)
  for k1, robj in rozdr.items()]
@@ -425,52 +460,55 @@ if PLOT_METHODS:
 # =============================================================================
 rattc = {k1: tp.attc.attc_zhzdr.AttenuationCorrection(robj)
          for k1, robj in rdata.items()}
-
+# TODO: maybe bettter to read the pcp_type parameter from RPARAMS?
 for k1, robj in rattc.items():
-    if robj.site_name in profs_data:
+    if idx_pclass[k1]:
         if ((abs((idx_pclass[k1][1] - robj.scandatetime).total_seconds())/60)
                 <= max_diffdtmin):
             robj.pcp_type = profs_data[k1]['pcp_type'][idx_pclass[k1][0]]
         else:
-            robj.pcp_type == 1
+            robj.pcp_type = 2
+    else:
+        robj.pcp_type = 2
     if rbands[k1] == 'C' and (robj.pcp_type == 0 or robj.pcp_type == 1
                               or robj.pcp_type == 4):
-        robj.att_alphai = [0.05, 0.1, 0.08]  # Light to moderate rain
+        robj.att_alphai = [0.05, 0.1, 0.05]  # Light to moderate rain
         robj.att_betaalphar = 0.39  # Continental
         # robj.att_betaalphar = 0.14  # Tropical
         print(f'scan LR-{rbands[k1]}-{robj.att_alphai}')
     elif rbands[k1] == 'C' and (robj.pcp_type == 2 or robj.pcp_type == 5):
-        robj.att_alphai = [0.1, 0.18, 0.08]  # Moderate to heavy rain
+        robj.att_alphai = [0.1, 0.18, 0.10]  # Moderate to heavy rain
         robj.att_betaalphar = 0.27  # medval
         print(f'scan MR-{rbands[k1]}-{robj.att_alphai}')
     elif rbands[k1] == 'C' and (robj.pcp_type == 3 or robj.pcp_type == 6):
-        robj.att_alphai = [0.1, 0.18, 0.08]  # Moderate to heavy rain
+        robj.att_alphai = [0.1, 0.18, 0.15]  # Moderate to heavy rain
         robj.att_betaalphar = 0.14  # Tropical
         # robj.att_betaalphar = 0.39  # Continental
         # att_alpha = [0.05, 0.18, 0.11]  # Light - heavy rain
         print(f'scan HR-{rbands[k1]}-{robj.att_alphai}')
     if rbands[k1] == 'X' and (robj.pcp_type == 0 or robj.pcp_type == 1
                               or robj.pcp_type == 4):
-        robj.att_alphai = [0.15, 0.30, 0.30]  # Light rain PARK
+        robj.att_alphai = [0.15, 0.30, 0.15]  # Light rain PARK
         robj.att_betaalphar = 0.19  # Continental
         # robj.att_betaalphar = 0.14  # Tropical
         print(f'scan LR-{rbands[k1]}-{robj.att_alphai}')
     elif rbands[k1] == 'X' and (robj.pcp_type == 2 or robj.pcp_type == 5):
-        robj.att_alphai = [0.30, 0.45, 0.30]  # Moderate to heavy rain PARK
+        robj.att_alphai = [0.30, 0.50, 0.30]  # Moderate to heavy rain PARK
         robj.att_betaalphar = 0.17  # medval
         print(f'scan MR-{rbands[k1]}-{robj.att_alphai}')
     elif rbands[k1] == 'X' and (robj.pcp_type == 3 or robj.pcp_type == 6):
-        robj.att_alphai = [0.30, 0.45, 0.30]  # Moderate to heavy rain PARK
+        robj.att_alphai = [0.30, 0.50, 0.45]  # Moderate to heavy rain PARK
         robj.att_betaalphar = 0.14  # Tropical
         # robj.att_betaalphar = 0.19  # Continental
         # att_alpha = [0.15, 0.35, 0.22]  # Light - heavy rain
         print(f'scan HR-{rbands[k1]}-{robj.att_alphai}')
 
 [robj.attc_phidp_prepro(
-    rdata[k1].georef, rdata[k1].params, rozdr[k1].vars, rhohv_min=0.85,
-    phidp0_correction=(True if (robj.site_name == 'Offenthal')
-                       or (robj.site_name == 'Neuheilenbach')
-                       or (robj.site_name == 'Flechtdorf')
+    rdata[k1].georef, rdata[k1].params, rozdr[k1].vars,
+    phidp0_correction=(True if robj.site_name == 'Offenthlal'
+                       or robj.site_name == 'Neuheilenbach'
+                       # or robj.site_name == 'Flechtdorf'
+                       # or robj.site_name == 'Feldberg'
                        else False))
  for k1, robj in rattc.items()]
 
@@ -512,6 +550,13 @@ if PLOT_METHODS:
     [tp.datavis.rad_display.plot_ppi(rdata[k1].georef, rdata[k1].params,
                                      robj.vars, var2plot='AH [dB/km]')
      for k1, robj in rattc.items()]
+    tp.datavis.rad_display.plot_mgrid(
+        [i.georef for k, i in rdata.items()],
+        [i.params for k, i in rdata.items()],
+        [i.vars for k, i in rattc.items()],
+        cpy_feats={'status': True}, proj_suffix='utm',
+        var2plot='AH [dB/km]',
+        data_proj=ccrs.UTM(zone=32), xlims=xlims, ylims=ylims)
 
 # %%
 # =============================================================================
@@ -529,7 +574,6 @@ zhah_lim = {k1: [20, 55] for k1, robj in rzhah.items()}
 mov_avrgf_len = (1, 7)
 
 for k1, robj in rattc.items():
-    robj.vars['ZH* [dBZ]'] = rzhah[k1].vars['ZH [dBZ]']
     zh_difnan = np.where(rzhah[k1].vars['diff [dBZ]'] == 0,
                          np.nan, rzhah[k1].vars['diff [dBZ]'])
     zhpdiff = np.array([np.nanmedian(i) if ~np.isnan(np.nanmedian(i)) else 0
@@ -553,21 +597,18 @@ if PLOT_METHODS:
 # =============================================================================
 # ZDR attenuation correction
 # =============================================================================
-zhzdr_a = 0.000249173
-zhzdr_b = 2.33327
 zdr_attcc = (9, 5, 3)
 zdr_attcx = (7, 10, 5)
 [robj.zdr_correction(
     rdata[k1].georef, rdata[k1].params, rozdr[k1].vars, rzhah[k1].vars,
     rnme[k1].nme_classif['classif [EC]'], mlyr=rmlyr[k1], attc_method='BRI',
     coeff_beta=RPARAMS[k1]['beta'], beta_alpha_ratio=robj.att_betaalphar,
-    rhv_thld=RPARAMS[k1]['rhvatt'],
-    mov_avrgf_len=(zdr_attcc[0] if rbands[robj.site_name] == 'C'
-                   else zdr_attcx[0]),
-    minbins=(zdr_attcc[1] if rbands[robj.site_name] == 'C' else zdr_attcx[1]),
-    p2avrf=(zdr_attcc[2] if rbands[robj.site_name] == 'C' else zdr_attcx[2]),
-    zh_zdr_model='exp', rparams={'coeff_a': zhzdr_a, 'coeff_b': zhzdr_b},
-    plot_method=PLOT_METHODS)
+    rhv_thld=RPARAMS[k1]['rhvatt'], plot_method=PLOT_METHODS,
+    zh_zdr_model='exp', rparams={'coeff_a': RPARAMS[k1]['zdrzh_a'],
+                                 'coeff_b': RPARAMS[k1]['zdrzh_b']},
+    mov_avrgf_len=(zdr_attcc[0] if rbands[k1] == 'C' else zdr_attcx[0]),
+    minbins=(zdr_attcc[1] if rbands[k1] == 'C' else zdr_attcx[1]),
+    p2avrf=(zdr_attcc[2] if rbands[k1] == 'C' else zdr_attcx[2]))
  for k1, robj in rattc.items()]
 
 if PLOT_METHODS:
@@ -579,7 +620,6 @@ if PLOT_METHODS:
 # =============================================================================
 # KDP Derivation
 # =============================================================================
-# rkdpv = []
 for k1, robj in rattc.items():
     if rbands[robj.site_name] == 'C':
         zh_kdp = 'ZH+ [dBZ]'
@@ -592,6 +632,8 @@ for k1, robj in rattc.items():
     # Remove NME
     v['KDP* [deg/km]'] = np.where(rnme[k1].nme_classif['classif [EC]'] != 0,
                                   np.nan, v['KDP [deg/km]'])
+    v['PhiDPv [deg]'] = np.where(rnme[k1].nme_classif['classif [EC]'] != 0,
+                                 np.nan, v['PhiDP [deg]'])
     # Remove negative KDP values in rain region and within ZH threshold
     robj.vars['KDP* [deg/km]'] = np.where(
         (rmlyr[k1].mlyr_limits['pcp_region [HC]'] == 1)
@@ -604,12 +646,17 @@ for k1, robj in rattc.items():
         & (robj.vars['KDP [deg/km]'] != 0),
         robj.vars['KDP [deg/km]'], robj.vars['KDP* [deg/km]'])
     robj.vars['KDP+ [deg/km]'] = v['KDP+ [deg/km]']
+    # robj.vars['PhiDPv [deg]'] = v['PhiDPv [deg]']
 
 if PLOT_METHODS:
     [tp.datavis.rad_display.plot_ppidiff(
         robj.georef, robj.params, rattc[k1].vars, rattc[k1].vars,
         var2plot1='KDP* [deg/km]', var2plot2='KDP+ [deg/km]',
-        diff_lims=[-1, 1, 0.1], vars_bounds={'KDP [deg/km]': (-1.5, 4.5, 17)})
+        diff_lims=[-1, 1, 0.1],
+        # var2plot1='PhiDP [deg]', var2plot2='PhiDPv [deg]',
+        # diff_lims=[-10, 10, 1],
+        vars_bounds={'KDP [deg/km]': (-0.5, 1.5, 17),
+                     'PhiDP [deg]': (0, 180, 19)},)
      for k1, robj in rdata.items()]
 
 # %%
@@ -617,8 +664,21 @@ if PLOT_METHODS:
 # Rainfall estimation
 # =============================================================================
 z_thld = 40
-# thr_zwsnw = 0
-# thr_zhail = 55
+thr_zhail = 55
+thr_zwsnw = 0
+
+qpe_amlb = False
+
+if qpe_amlb:
+    f_rz_ml = 0.6
+    f_rz_aml = 2.8
+else:
+    f_rz_ml = 0
+    f_rz_aml = 0
+    # max_rkm = 151
+
+# for k1, robj in rattc.items():
+#     robj.vars['ZH+ [dBZ]'][robj.vars['ZH [dBZ]'] <= 5] = np.nan
 
 rprods_dp = ['r_adp', 'r_ah', 'r_kdp', 'r_z']
 rprods_hbr = ['r_ah_kdp', 'r_kdp_zdr', 'r_z_ah', 'r_z_kdp', 'r_z_zdr']
@@ -629,7 +689,6 @@ rprods_nmd = ['r_aho_kdpo', 'r_kdpo', 'r_zo', 'r_zo_ah', 'r_zo_kdp',
 
 rprods = sorted(rprods_dp[1:] + rprods_hbr + rprods_opt + rprods_hyop
                 + ['r_aho_kdpo', 'r_zo', 'r_kdpo'])
-# rprods = sorted(['r_z', 'r_kdp'])
 
 adpr = 'ADP [dB/km]'
 ahr = 'AH [dB/km]'
@@ -714,7 +773,6 @@ if 'r_z_ah' in rprods:
     [robj.z_ah_to_r(rattc[k1].vars[zh_r[robj.site_name]],
                     rattc[k1].vars[ahr], mlyr=rmlyr[k1],
                     rz_a=RPARAMS[k1]['rz_a'], rz_b=RPARAMS[k1]['rz_b'],
-                    # rz_a=(1/0.026)**(1/0.69), rz_b=1/0.69,
                     rband=rbands[robj.site_name], temp=temp, z_thld=z_thld,
                     beam_height=rdata[k1].georef['beam_height [km]'])
      for k1, robj in rqpe.items()]
@@ -739,7 +797,6 @@ if 'r_ah_kdp' in rprods:
         rattc[k1].vars[kdpr], mlyr=rmlyr[k1], rband=rbands[robj.site_name],
         temp=temp, z_thld=z_thld,
         rkdp_a=RPARAMS[k1]['rkdp_a'], rkdp_b=RPARAMS[k1]['rkdp_b'],
-        # rah_a=rah_a, rah_b=rah_b, rkdp_a=rkdp_a, rkdp_b=rkdp_b,
         beam_height=rdata[k1].georef['beam_height [km]'])
      for k1, robj in rqpe.items()]
 
@@ -759,7 +816,7 @@ if 'r_kdpopt' in rprods:
         ptitle_pfx=f'{robj.elev_angle}'
         + f'{(" deg." if rbands[robj.site_name] == "X" else "")}'
         + f' -- {robj.scandatetime.strftime("%Y-%m-%d %H:%M:%S")}',
-        plot_method=True)
+        plot_method=PLOT_METHODS)
                 for k1, robj in rqpe_opt.items()}
     [robj.kdp_to_r(rattc[k1].vars[kdpr], mlyr=rmlyr[k1],
                    a=rkdp_fit[k1][0], b=rkdp_fit[k1][1],
@@ -771,7 +828,7 @@ if 'r_zopt' in rprods:
     rzh_fit = {k1: tpx.rzh_opt(
         rattc[k1].vars[zh_zho[robj.site_name]], rqpe[k1].r_ah,
         rattc[k1].vars['AH [dB/km]'], pia=rattc[k1].vars['PIA [dB]'],
-        mlyr=rmlyr[k1], minpia=(0.1), fit_ab=False,
+        mlyr=rmlyr[k1], zh_hail=thr_zhail, minpia=(0.1), fit_ab=False,
         maxpia=(100 if rbands[robj.site_name] == 'X' else 100),
         rzfit_b=(2.14 if rbands[robj.site_name] == 'X' else 1.6),
         rz_stv=[[RPARAMS[k1]['rz_a'], RPARAMS[k1]['rz_b']],
@@ -904,18 +961,6 @@ if 'r_aho_kdpo' in rprods:
 # =============================================================================
 # QPE within and above the MLYR
 # =============================================================================
-if qpe_amlb:
-    thr_zwsnw = 0
-    thr_zhail = 55
-    f_rz_ml = 0.6
-    f_rz_aml = 2.8
-else:
-    thr_zwsnw = 0
-    thr_zhail = 55
-    f_rz_ml = 0
-    f_rz_aml = 0
-    # max_rkm = 151
-# =============================================================================
 # RZ relation is modified by applying a factor to data within the ML.
 rqpe_ml = {k1: tp.qpe.qpe_algs.RadarQPE(robj) for k1, robj in rattc.items()}
 [robj.z_to_r(rattc[k1].vars[zh_r[robj.site_name]],
@@ -982,304 +1027,8 @@ toc1 = perf_counter()
 print(f'TIME ELAPSED [Quality-control]: {dt.timedelta(seconds=toc1-tic)}')
 
 # %%
-# PLOT_METHODS = True
-# v2p = 'AH [dB/km]'
-v2p = 'ZH+ [dBZ]'
-v2p = 'beam_height [km]'
-# v2p = 'PhiDP [deg]'
-# v2p = 'rhoHV [-]'
-# v2p = 'ZDR [dB]'
-# v2p = 'KDP* [deg/km]'
-if PLOT_METHODS:
-    [tp.datavis.rad_display.plot_ppi(
-        robj.georef, robj.params, robj.georef, var2plot=v2p,
-        # robj.georef, robj.params, rattc[k1].vars, var2plot=v2p,
-        cpy_feats={'status': True, 'tiles': False, 'alpha_rad': 0.9,
-                   'alpha_tiles': 1, 'tiles_source': 'OSM',
-                   'tiles_style': None}, data_proj=ccrs.PlateCarree(),
-        # rd_maxrange=True, ring=[1, 5],
-        proj_suffix='wgs84', fig_size=fig_size, xlims=xlims, ylims=ylims,
-        vars_bounds={'Beam_height [km]': [0, 5, int(1+((5-0)/0.2))]},)
-     for k1, robj in rdata.items()]
-    [tp.datavis.rad_display.plot_ppi(
-        rdata[k1].georef, rdata[k1].params, robj.vars, var2plot=v2p,
-        vars_bounds={'KDP [deg/km]': (-1, 3, 17)})
-        for k1, robj in rattc.items()]
-
-# %%
-v2p = 'Rainfall [mm/h]'
-if PLOT_METHODS:
-    [tp.datavis.rad_display.plot_ppi(
-        robj.georef, robj.params, rqpe[k1].r_kdpopt, xlims=xlims, ylims=ylims,
-        cpy_feats={'status': True}, data_proj=ccrs.UTM(zone=32), var2plot=v2p,
-        proj_suffix='utm', fig_size=fig_size)
-     for k1, robj in rdata.items()]
-    [tp.datavis.rad_display.plot_ppi(
-        robj.georef, robj.params, rqpe[k1].r_kdpopt, var2plot=v2p)
-        for k1, robj in rdata.items()]
-    tp.datavis.rad_display.plot_mgrid(
-        [i.georef for k, i in rdata.items()],
-        [i.params for k, i in rdata.items()],
-        [i.r_zopt for k, i in rqpe.items()], cpy_feats={'status': True},
-        var2plot=v2p, proj_suffix='utm', data_proj=ccrs.UTM(zone=32),
-        xlims=xlims, ylims=ylims)
-
-# %%
 # =============================================================================
-# adds altitude to BH for analysis
-# =============================================================================
-# for k1, robj in rdata.items():
-#     print(robj.params['altitude [m]']/1000)
-#     robj.georef['beam_height [km]'] += robj.params['altitude [m]']/1000
-#     # robj.georef['beam_height [km]'] -= robj.params['altitude [m]']/1000
-
-# %%
-nbins = max([robj.params['ngates'] for k1, robj in rdata.items()])
-nbins = 500
-# nbins = 1000
-
-if COMPOSITE:
-    tic = perf_counter()
-    for k1, robj in rqpe.items():
-        [setattr(
-            robj, rp, {(k2): (
-                np.where(getattr(robj, rp)['Rainfall [mm/h]'] == 0, np.nan,
-                         getattr(robj, rp)['Rainfall [mm/h]'])
-                if 'Rainfall' in k2 else v1)
-                for k2, v1 in getattr(robj, rp).items()})
-            for rp in robj.__dict__.keys() if rp.startswith('r_')]
-    # derive UTM Zone 29 coordinates of range-bin centroids
-    # create osr projection using epsg number for UTM Zone 29
-    rads_coord = {k1: np.array([robj.georef['grid_utmx'].flatten(),
-                  robj.georef['grid_utmy'].flatten()]).T
-                  for k1, robj in rdata.items()}
-    # define target grid for composition
-    xmin, xmax, ymin, ymax = tpx.bbox(
-        np.concatenate([i for k, i in rads_coord.items()], axis=0))
-    # x = np.linspace(xmin, xmax + binres, int(nbins))
-    # y = np.linspace(ymin, ymax + binres, int(nbins))
-    cgrid_x = np.linspace(xmin - nbins, xmax + nbins, int(nbins*2))
-    cgrid_y = np.linspace(ymin - nbins, ymax + nbins, int(nbins*2))
-    # x = np.linspace(xmin, xmax, int(nbins*2))
-    # y = np.linspace(ymin, ymax, int(nbins*2))
-    grid_coords = wrl.util.gridaspoints(cgrid_y, cgrid_x)
-    # derive quality information - in this case, the pulse volume
-    pulse_volumes = {k1: np.tile(wrl.qual.pulse_volume(
-        robj.georef['range [m]'], robj.params['gateres [m]'],
-        robj.params['beamwidth [deg]']), robj.params['nrays'])
-        for k1, robj in rdata.items()}
-    pulse_volumes2 = {k1:
-                      {'pulse_volume [exp]':
-                       pulse_volumes[k1].reshape(
-                           rdata[k1].georef['beam_height [km]'].shape)}
-                         for k1, robj in pulse_volumes.items()}
-    # interpolate polar radar-data and quality data to the grid
-    rd_quality_gridded = [wrl.comp.togrid(
-        robj, grid_coords, rdata[k1].georef['range [m]'].max()
-        + rdata[k1].georef['range [m]'][0], robj.mean(axis=0),
-        pulse_volumes[k1], wrl.ipol.Nearest)
-        for k1, robj in rads_coord.items()]
-    # Define the radar rainfall products to be composed.
-    rfields = {k1: {k: v for k, v in robj.__dict__.items()
-                    if isinstance(v, dict)} for k1, robj in rqpe.items()}
-    # rfieldk = set([k for i in rfields for k in i.keys()])
-    rd_gridded = {k1: [wrl.comp.togrid(
-        robj, grid_coords, rdata[k2].georef['range [m]'].max()
-        + rdata[k2].georef['range [m]'][0], robj.mean(axis=0),
-        rfields[k2][k1]['Rainfall [mm/h]'][:, 0:].ravel(), wrl.ipol.Nearest)
-        for k2, robj in rads_coord.items()] for k1 in rprods}
-    # compose the both radar-data based on the quality information
-    # calculated above
-    ires = 0.001
-    # ires = 0
-    rcomps = {k1: wrl.comp.compose_weighted(
-        v1, [1. / (i + ires) for i in rd_quality_gridded])
-        for k1, v1 in rd_gridded.items()}
-    rcomps = {k1: np.ma.masked_invalid(v1) for k1, v1 in rcomps.items()}
-    rcomps = {k1: v1.reshape((len(cgrid_x), len(cgrid_y)))
-              for k1, v1 in rcomps.items()}
-    # TODO: add option to compose polarimetric moments, BH and MLH.
-    # =============================================================================
-    # Only valid when using radars operating at the same frequency/band
-    # =============================================================================
-    # FOR BEAM HEIGHT ONLY
-    rd_quality_gridded2 = [wrl.comp.togrid(
-        robj, grid_coords, rdata[k1].georef['range [m]'].max()
-        + rdata[k1].georef['range [m]'][0], robj.mean(axis=0),
-        # pulse_volumes[k1], wrl.ipol.Idw)
-        pulse_volumes[k1], wrl.ipol.Nearest)
-        for k1, robj in rads_coord.items()]
-    rd_gridded2 = [wrl.comp.togrid(
-        robj, grid_coords, rdata[k1].georef['range [m]'].max()
-        + rdata[k1].georef['range [m]'][0], robj.mean(axis=0),
-        rdata[k1].georef['beam_height [km]'][:, 0:].ravel(),
-        # rmlyr[k1].mlyr_limits['pcp_region [HC]'][:, 0:].ravel(),
-        # wrl.ipol.Idw) for k1, robj in rads_coord.items()]
-        wrl.ipol.Nearest) for k1, robj in rads_coord.items()]
-    rcomp_ml = wrl.comp.compose_ko(
-        rd_gridded2, [1. / (i + ires) for i in rd_quality_gridded2])
-    rcomp_ml = np.ma.masked_invalid(rcomp_ml)
-    rcomp_ml = {'beam_height [km]':
-                rcomp_ml.reshape((len(cgrid_x), len(cgrid_y)))}
-    # rvars = ['ADP [dB/km]', 'AH [dB/km]', 'KDP [deg/km]',
-    #          'ZDR [dB]', 'ZH [dBZ]']
-    # rvfields = [{k1: v1 for k1, v1 in robj.vars.items() if k1 in rvars}
-    #             for cnt, robj in enumerate(rattc)]
-    # rd_gridded3 = {k1: [wrl.comp.togrid(
-    #     robj, grid_coords, rdata[cnt].georef['range [m]'].max()
-    #     + rdata[cnt].georef['range [m]'][0], robj.mean(axis=0),
-    #     rvfields[cnt][k1][:, 0:].ravel(), wrl.ipol.Nearest)
-    #     for cnt, robj in enumerate(rads_coord)] for k1 in rvars}
-    # rcomps_pv = {k1: wrl.comp.compose_weighted(
-    #     v1, [1. / (i + 0.001) for i in rd_quality_gridded])
-    #     for k1, v1 in rd_gridded3.items()}
-    # rcomps_pv = {k1: np.ma.masked_invalid(v1)
-    #              for k1, v1 in rcomps_pv.items()}
-    # rcomps_pv = {k1: v1.reshape((len(x), len(y)))
-    #              for k1, v1 in rcomps_pv.items()}
-    # [robj.z_to_r(rzhah[cnt].vars['ZH [dBZ]'], mlyr=rmlyr[cnt],
-    #              a=RPARAMS[k1]['rz_a'], b=RPARAMS[k1]['rz_b'],
-    #              beam_height=rdata[cnt].georef['beam_height [km]'])
-    #  if 'xpol' in robj.site_name.lower() else
-    #  robj.z_to_r(rattc[cnt].vars['ZH [dBZ]'], mlyr=rmlyr[cnt],
-    #              a=RPARAMS[k1]['rz_a'], b=RPARAMS[k1]['rz_b'],
-    #              beam_height=rdata[cnt].georef['beam_height [km]'])
-    #  for cnt, robj in enumerate(rqpe)]
-    rcomp_params = copy.copy(rdata[list(rdata)[0]].params)
-    dt_mean1 = [robj.scandatetime for k1, robj in rqpe.items()]
-    dt_mean = min(dt_mean1)+(max(dt_mean1)-min(dt_mean1))/2
-    # rqpe_dt.append(dt_mean)
-    rcomps['datetime'] = dt_mean
-    rcomps['elev_ang [deg]'] = {robj.site_name: robj.elev_angle
-                                for k1, robj in rqpe.items()}
-    rcomp_georef = {
-        'grid_utmx':
-            grid_coords[:, 0].reshape((len(cgrid_x), len(cgrid_y))),
-        'grid_utmy':
-            grid_coords[:, 1].reshape((len(cgrid_x), len(cgrid_y)))}
-    epsg_to_osr = 32632
-    wgs84 = wrl.georef.get_default_projection()
-    utm = wrl.georef.epsg_to_osr(epsg_to_osr)
-    rcomp_georef['grid_wgs84x'], rcomp_georef['grid_wgs84y'] = (
-        wrl.georef.reproject(rcomp_georef['grid_utmx'],
-                             rcomp_georef['grid_utmy'],
-                             # projection_source=utm,
-                             # projection_target=wgs84)
-                             src_crs=utm, trg_crs=wgs84)
-        )
-    toc2 = perf_counter()
-    print(f'TIME ELAPSED [Composite]: {dt.timedelta(seconds=toc2-tic)}')
-# %%
-if COMPOSITE:
-    # xlims, ylims = (6.6, 7.2), (50.6, 51.2)
-    # ralg = 'r_ah'
-    # ralg = 'r_kdpopt'
-    # ralg = 'r_zopt'
-    ralg = 'Beam height'
-    rcomp_vars = rcomp_ml
-    # rcomp_vars = {'ZH [dBZ]': composite}
-    # rcomp_vars = {'Rainfall [mm/h]': rcomps[ralg]}
-    rad_display.plot_ppi(
-        rcomp_georef, rcomp_params, rcomp_vars,  # var2plot='Rainfall [mm/h]',
-        cpy_feats={'status': True, 'tiles': True, 'alpha_rad': 0.9,
-                   'alpha_tiles': 1, 'tiles_source': 'OSM',
-                   'tiles_style': None},
-        proj_suffix='wgs84',
-        data_proj=ccrs.PlateCarree(), xlims=xlims, ylims=ylims,
-        fig_size=fig_size,
-        # ucmap='jet',
-        # ucmap='terrain',
-        # ucmap='gist_earth_r',
-        # vars_bounds={'Beam_height [km]': [0, 5, int(1+((5-0)/0.25))]},
-        vars_bounds={'Beam_height [km]': [0, 5, int(1+((5-0)/0.2))]},
-        fig_title=(f'Radar Composite [{ralg}]: '
-                   + f"{rcomp_params['datetime']:%Y-%m-%d %H:%M}"))
-    # tp.datavis.rad_display.plot_mgrid(
-    #     [i.georef for k, i in rdata.items()],
-    #     [i.params for k, i in rdata.items()],
-    #     [i for k, i in pulse_volumes2.items()], cpy_feats={'status': True},
-    #     proj_suffix='utm', data_proj=ccrs.UTM(zone=32),
-    #     var2plot='pulse_volume [exp]', xlims=xlims, ylims=ylims,
-    #     vars_bounds={'pulse_volume [exp]': [0, 1.6e9, 17]}, ucmap='viridis')
-# %%
-# =============================================================================
-# Read RG data
-# =============================================================================
-# RG_WDIR = (LWDIR + 'pd_rdres/dwd_rg/')
-# DWDRG_MDFN = (RG_WDIR + 'RR_Stundenwerte_Beschreibung_Stationen2024.csv')
-# RG_NCDATA = (LWDIR + 'pd_rdres/dwd_rg/'
-#              # + 'nrw_20210713_20210715_1h_1hac/'
-#              + 'nrw_20170723_20170727_1h_1hac/'
-#              )
-
-# =============================================================================
-# Init raingauge object
-# =============================================================================
-# rg_data = tpx.RainGauge(RG_WDIR, nwk_opr='DWD')
-
-# =============================================================================
-# Read metadata of all DWD rain gauges (location, records, etc)
-# =============================================================================
-# rg_data.get_dwdstn_mdata(DWDRG_MDFN, plot_methods=False)
-
-# =============================================================================
-# Get rg locations within radar coverage
-# =============================================================================
-# rg_data.get_stns_rad(rqpe_acc.georef, rqpe_acc.params, rg_data.dwd_stn_mdata,
-#                     # dmax2rad=rqpe_acc.georef['range [m]'][-75]/1000,
-#                     dmax2rad=50,
-#                     dmax2radbin=1, plot_methods=PLOT_METHODS)
-
-# =============================================================================
-# Get rg locations within bounding box
-# =============================================================================
-# bbox_xlims, bbox_ylims = (6, 9.2), (49.35, 52.32)  # XPOL
-# bbox_xlims, bbox_ylims = (5.5, 8.5), (49.7, 52.18)  # XPOLF
-# bbox_xlims, bbox_ylims = (6, 11.), (48.6, 52.8)  # DWDXPOL
-# bbox_xlims, bbox_ylims = (6, 10.7), (49, 52.6)  # DWDXPOLF
-# # 4.59351 , 4.19004, 10.8476, 11.0174
-# bbox_xlims = (rcomp_georef['grid_wgs84x'].min(),
-#               rcomp_georef['grid_wgs84x'].max())
-# bbox_ylims = (rcomp_georef['grid_wgs84y'].min(),
-#               rcomp_georef['grid_wgs84y'].max())
-# rg_data.get_stns_box(rg_data.dwd_stn_mdata, bbox_xlims=bbox_xlims,
-#                      bbox_ylims=bbox_ylims, plot_methods=True,
-#                      surface=rcomp_georef)
-
-# a = tpx.bbox(rcomp_georef['grid_wgs84x'], rcomp_georef['grid_wgs84y'])
-
-# =============================================================================
-# Download DWD rg data
-# =============================================================================
-# for hour in range(96):
-#     start_time = dt.datetime(2017, 7, 23, 0, 0, 0)
-#     # print(hour)
-#     start_time = start_time + dt.timedelta(hours=hour)
-#     print(start_time)
-#     stop_time = start_time + dt.timedelta(hours=1)
-#     print(stop_time)
-#     # start_time = start_time + datetime.timedelta(hours=hour+1)
-#     # print(start_time)
-#     # for station_id in rg_data.stn_near_rad['stations_id']:
-#     for station_id in rg_data.stn_bbox['station_id']:
-#         rg_data.get_dwdstn_nc(station_id, start_time, stop_time,
-#                               dir_ncdf=RG_NCDATA)
-
-# =============================================================================
-# Read DWD rg data
-# =============================================================================
-# rg_data.get_rgdata(resqpe_accd_params['datetime'], ds_ncdir=RG_NCDATA,
-#                    drop_nan=True, drop_thrb=None, ds2read=rg_data.stn_bbox,
-#                    ds_tres=dt.timedelta(hours=1),
-#                    # dt_bkwd=dt.timedelta(hours=3),
-#                    # ds_accum=dt.timedelta(hours=3),
-#                    dt_bkwd=dt.timedelta(hours=1),
-#                    ds_accum=dt.timedelta(hours=1),
-#                    plot_methods=False)
-
-# %%
-# =============================================================================
-# FINAL OBJ
+# CREATES A TOWERPY OBJECT WITH PROCESSED VARIABLES
 # =============================================================================
 rd_qcatc = {}
 for k1, robj in rdata.items():
@@ -1302,101 +1051,285 @@ for k1, robj in rdata.items():
     # del rd_qcat.vars['PhiDP* [deg]']
     # rd_qcat.vars['Rainfall [mm/h]'] = rqpe[k1].r_zopt['Rainfall [mm/h]']
     rd_qcat.vars = {}
-    rd_qcat.vars['ZH [dBZ]'] = rattc[k1].vars['ZH+ [dBZ]']
+    rd_qcat.vars['ZH+ [dBZ]'] = rattc[k1].vars['ZH+ [dBZ]']
     rd_qcat.vars['ZDR [dB]'] = rattc[k1].vars['ZDR [dB]']
     rd_qcat.vars['PhiDP [deg]'] = rattc[k1].vars['PhiDP [deg]']
     rd_qcat.vars['rhoHV [-]'] = rozdr[k1].vars['rhoHV [-]']
     rd_qcat.vars['AH [dB/km]'] = rattc[k1].vars['AH [dB/km]']
-    rd_qcat.vars['KDP [deg/km]'] = rattc[k1].vars['KDP+ [deg/km]']
-    # rd_qcat.vars['ZH+ [dBZ]'] = rattc[k1].vars['ZH+ [dBZ]']
+    rd_qcat.vars['KDP+ [deg/km]'] = rattc[k1].vars['KDP+ [deg/km]']
+    rd_qcat.vars['alpha [-]'] = rattc[k1].vars['alpha [-]']
+    rd_qcat.vars['ZH+ [dBZ]'] = rattc[k1].vars['ZH+ [dBZ]']
     # rd_qcat.vars['Beam_height [km]'] = rdata[k1].georef['beam_height [km]']
     rd_qcatc[k1] = rd_qcat
-
-# if PLOT_METHODS:
-[tp.datavis.rad_display.plot_setppi(
-    rdata[k1].georef, rdata[k1].params, rd_qcatc[k1].vars,
-    # vars_bounds={'AH [dB/km]': [0, 0.5, 17], 'KDP [deg/km]': [-1, 3, 17]}
-    )
-for k1, robj in rdata.items()]
 
 # %%
 # =============================================================================
 # PLOTS
 # =============================================================================
-# bh = [i.georef for i in rdata]
-# bh2 = [{k: v for k, v in i.items() if 'beam' in k} for i in bh]
-
+v2p = 'PhiDP [deg]'
+v2p = 'rhoHV [-]'
+v2p = 'ZDR [dB]'
 v2p = 'ZH+ [dBZ]'
-# v2p = 'PhiDP [deg]'
-# v2p = 'rhoHV [-]'
-# v2p = 'ZDR [dB]'
 # v2p = 'KDP+ [deg/km]'
+# v2p = 'AH [dB/km]'
 
-# [tp.datavis.rad_display.plot_ppi(rdata[k1].georef, rdata[k1].params,
-#                                  robj.vars)
-#  for k1, robj in rdata.items()]
-
-# if PLOT_METHODS:
-nplot = list(rdata)[-1]
-tp.datavis.rad_interactive.ppi_base(
-    rdata[nplot].georef, rdata[nplot].params,
-    # rdata[nplot].vars,
-    # ropdp[nplot].vars,
-    # rsnr[nplot].vars,
-    # rnme[nplot].vars,
-    # rozdr[nplot].vars,
-    # rattc[nplot].vars,
-    rd_qcatc[nplot].vars,
-    # bh2[nplot],
-    # rzhah[nplot].vars,
-    # coord='rect',
-    # var2plot='rhoHV [-]',
-    # var2plot='beta',
-    # var2plot='PIA [dB]',
-    # var2plot='AH [dB/km]',
-    # var2plot='KDP+ [deg/km]',
-    # var2plot='V [m/s]',
-    # var2plot='Rainfall [mm/h]',
-    # var2plot='PhiDP [deg]',
-    # var2plot='beam_height [km]',
-    # var2plot='ZDR [dB]',
-    # var2plot='ZH+ [dBZ]',
-    # ylims={'ZH [dBZ]': (0, 50)},
-    # radial_xlims=(45, 65),
-    vars_bounds={'KDP [deg/km]': (-1, 3, 17),
-                 'PIA [dB]': (0, 19, 20),
-                 'AH [dB/km]': (0, 0.02, 13),
-                 # 'PhiDP [deg]': (-10, 85, 20),
-                 # 'ZH [dBZ]': [5, 50, 10],
-                 # 'rhoHV [-]': (0.3, .9, 1),
-                 # 'Rainfall [mm/h]': [0, 55, 12],
-                 },
-    # ucmap='tpylsc_useq_model',
-    # ucmap='turbo',
-    mlyr=rmlyr[nplot]
-    )
-ppiexplorer = tp.datavis.rad_interactive.PPI_Int()
+if PLOT_METHODS:
+    tp.datavis.rad_display.plot_mgrid(
+        [i.georef for k, i in rdata.items()],
+        [i.params for k, i in rdata.items()],
+        [i.vars for k, i in rd_qcatc.items()], var2plot=v2p, proj_suffix='utm',
+        cpy_feats={'status': True},  data_proj=ccrs.UTM(zone=32),
+        # vars_bounds={'KDP [deg/km]': [-0.5, 1.5, 17]},
+        xlims=xlims, ylims=ylims, fig_size=(18, 10))
+    [tp.datavis.rad_display.plot_setppi(
+        robj.georef, robj.params, rd_qcatc[k1].vars)
+        for k1, robj in rdata.items()]
+    [tp.datavis.rad_display.plot_ppi(
+        rdata[k1].georef, rdata[k1].params, robj.vars, var2plot=v2p,
+        rd_maxrange=True, ring=80, range_rings=np.arange(30, 150, 30),
+        plot_contourl='KDP+ [deg/km]',
+        vars_bounds={'KDP+ [deg/km]': [1, 3, 3]},
+        contour_kw={'alpha': 0.85, 'linestyles': 'dashed', 'legend': True,
+                    'cmap': 'binary'}, font_sizes='large')
+     for k1, robj in rd_qcatc.items()]
 # %%
-# import matplotlib.colors as mcolors
-# import matplotlib as mpl
+# =============================================================================
+# INTERACTIVE PLOT
+if PLOT_METHODS:
+    nplot = list(rdata)[8]
+    tp.datavis.rad_interactive.ppi_base(
+        rdata[nplot].georef, rdata[nplot].params,
+        # # rdata[nplot].vars,
+        # # ropdp[nplot].vars,
+        # # rsnr[nplot].vars,
+        # # rnme[nplot].vars,
+        # rozdr[nplot].vars,
+        # rattc[nplot].vars,
+        rd_qcatc[nplot].vars,
+        # bh2[nplot],
+        # rzhah[nplot].vars,
+        # coord='rect',
+        # var2plot='rhoHV [-]',
+        # var2plot='beta',
+        # var2plot='PIA [dB]',
+        # var2plot='AH [dB/km]',
+        # var2plot='KDP+ [deg/km]',
+        # var2plot='V [m/s]',
+        # var2plot='Rainfall [mm/h]',
+        var2plot='PhiDP [deg]',
+        # var2plot='beam_height [km]',
+        # var2plot='ZDR [dB]',
+        # var2plot='ZH+ [dBZ]',
+        # ylims={'ZH [dBZ]': (0, 50)},
+        # radial_xlims=(45, 65),
+        vars_bounds={'KDP [deg/km]': (-1, 3, 17),
+                     # 'PIA [dB]': (0, 19, 20),
+                     'AH [dB/km]': (0, 0.1, 13),
+                     # 'PhiDP [deg]': (-10, 85, 20),
+                     # 'ZH [dBZ]': [5, 50, 10],
+                     # 'rhoHV [-]': (0.3, .9, 1),
+                     # 'Rainfall [mm/h]': [0, 55, 12],
+                     },
+        # ucmap='tpylsc_useq_model',
+        # ucmap='turbo',
+        mlyr=rmlyr[nplot]
+        )
+    ppiexplorer = tp.datavis.rad_interactive.PPI_Int()
+# %%
+# =============================================================================
+ralg = 'r_zopt'
 
-# fvars = {}
-# # cmap = mpl.colormaps['tpylsc_dbu_rd']
-# fvars['ZH [dBZ]'] = (np.nan_to_num(rd_gridded[1].reshape((len(x), len(y))))
-#                      - np.nan_to_num(rd_gridded[2].reshape((len(x), len(y)))))
-# rcomp_georef = {}
-# # rcomp_georef = {'xgrid': x, 'ygrid': y}
-# rcomp_georef = {'grid_utmx': x, 'grid_utmy': y}
-# tp.datavis.rad_display.plot_ppi(rcomp_georef, rcomp_params, fvars,
-#                                 cpy_feats={'status': True},
-#                                 data_proj=ccrs.UTM(zone=32),
-#                                 proj_suffix='utm',
-#                                 fig_size=(11.5, 7),
-#                                 xlims=xlims, ylims=ylims,
-#                                 # var2plot='ZH* [dBZ]',
-#                                 vars_bounds={'ZH [dBZ]': (-10, 10, 19)},
-#                                 # unorm=unorm,
-#                                 # ucmap='tpylsc_rd_w_k_r',
-#                                 ucmap='tpylsc_div_rd_w_k_r'
-#                                 # ucmap='tpylsc_grey',
-#                                )
+if PLOT_METHODS:
+    tp.datavis.rad_display.plot_mgrid(
+        [i.georef for k, i in rdata.items()],
+        [i.params for k, i in rdata.items()],
+        [getattr(i, ralg) for k, i in rqpe.items()],  # ncols=1, nrows=2,
+        xlims=xlims, ylims=ylims, cpy_feats={'status': True},
+        proj_suffix='utm', data_proj=ccrs.UTM(zone=32), fig_size=(18, 10))
+    [tp.datavis.rad_display.plot_ppi(
+        robj.georef, robj.params, getattr(rqpe[k1], ralg),
+        fig_size=fig_size, xlims=xlims, ylims=ylims, proj_suffix='utm',
+        cpy_feats={'status': True}, data_proj=ccrs.UTM(zone=32))
+     for k1, robj in rdata.items()]
+    [tp.datavis.rad_display.plot_ppi(
+        robj.georef, robj.params, getattr(rqpe[k1], ralg))
+        for k1, robj in rdata.items()]
+
+# %%
+# =============================================================================
+# adds altitude to BH for visualisation
+# =============================================================================
+for k1, robj in rd_qcatc.items():
+    print(f"Altitude {robj.site_name}: {robj.params['altitude [m]']:0.2f} m")
+    # robj.georef['beam_height [km]'] += robj.params['altitude [m]']/1000
+    # robj.georef['beamtop_height [km]'] += robj.params['altitude [m]']/1000
+    # robj.georef['beambottom_height [km]'] += robj.params['altitude [m]']/1000
+
+if PLOT_METHODS:
+    [tp.datavis.rad_display.plot_ppi(
+        robj.georef, robj.params, robj.georef, var2plot='beam_height [km]',
+        cpy_feats={'status': True, 'tiles': False, 'alpha_rad': 0.9,
+                   'alpha_tiles': 1, 'tiles_source': 'OSM',
+                   'tiles_style': None}, data_proj=ccrs.PlateCarree(),
+        proj_suffix='wgs84', fig_size=fig_size, xlims=xlims, ylims=ylims,
+        vars_bounds={'Beam_height [km]': [0, 5, int(1+((5-0)/0.2))]})
+     for k1, robj in rd_qcatc.items()]
+    tp.datavis.rad_display.plot_mgrid(
+        [i.georef for k, i in rd_qcatc.items()],
+        [i.params for k, i in rd_qcatc.items()],
+        [i.georef for k, i in rd_qcatc.items()], var2plot='beam_height [km]',
+        xlims=xlims, ylims=ylims, proj_suffix='utm', data_proj=ccrs.UTM(zone=32),
+        cpy_feats={'status': True, 'tiles': True, 'tiles_source': 'OSM',
+                   'alpha_tiles': 1, 'alpha_rad': 0.9,  'tiles_style': None},
+        vars_bounds={'Beam_height [km]': [0, 5, int(1+((5-0)/0.2))]})
+# %%
+nbins = max([robj.params['ngates'] for k1, robj in rd_qcatc.items()])
+nbins = 500
+# nbins = 1000
+
+if COMPOSITE:
+    tic = perf_counter()
+    for k1, robj in rqpe.items():
+        [setattr(robj, rp, {(k2): (
+            np.where(getattr(robj, rp)['Rainfall [mm/h]'] == 0, np.nan,
+                     getattr(robj, rp)['Rainfall [mm/h]'])
+            if 'Rainfall' in k2 else v1)
+            for k2, v1 in getattr(robj, rp).items()})
+            for rp in robj.__dict__.keys() if rp.startswith('r_')]
+    # derive UTM Zone 29 coordinates of range-bin centroids
+    # create osr projection using epsg number for UTM Zone 29
+    rads_coord = {k1: np.array([robj.georef['grid_utmx'].flatten(),
+                  robj.georef['grid_utmy'].flatten()]).T
+                  for k1, robj in rd_qcatc.items()}
+    # define target grid for composition
+    xmin, xmax, ymin, ymax = tpx.bbox(
+        np.concatenate([i for k, i in rads_coord.items()], axis=0))
+    cgrid_x = np.linspace(xmin - nbins, xmax + nbins, int(nbins*2))
+    cgrid_y = np.linspace(ymin - nbins, ymax + nbins, int(nbins*2))
+    grid_coords = wrl.util.gridaspoints(cgrid_y, cgrid_x)
+    # derive quality information - in this case, the pulse volume
+    pulse_volumes = {k1: np.tile(wrl.qual.pulse_volume(
+        robj.georef['range [m]'], robj.params['gateres [m]'],
+        robj.params['beamwidth [deg]']), robj.params['nrays'])
+        for k1, robj in rd_qcatc.items()}
+    pulse_volumes2 = {
+        k1: {'pulse_volume [exp]':
+             pulse_volumes[k1].reshape(
+                 rd_qcatc[k1].georef['beam_height [km]'].shape)}
+        for k1, robj in pulse_volumes.items()}
+    # interpolate polar radar-data and quality data to the grid
+    rd_quality_gridded = [wrl.comp.togrid(
+        robj, grid_coords, rd_qcatc[k1].georef['range [m]'].max()
+        + rd_qcatc[k1].georef['range [m]'][0], robj.mean(axis=0),
+        pulse_volumes[k1], wrl.ipol.Nearest)
+        for k1, robj in rads_coord.items()]
+    # Define the radar rainfall products to be composed.
+    rfields = {k1: {k: v for k, v in robj.__dict__.items()
+                    if isinstance(v, dict)} for k1, robj in rqpe.items()}
+    rd_gridded = {k1: [wrl.comp.togrid(
+        robj, grid_coords, rd_qcatc[k2].georef['range [m]'].max()
+        + rd_qcatc[k2].georef['range [m]'][0], robj.mean(axis=0),
+        rfields[k2][k1]['Rainfall [mm/h]'][:, 0:].ravel(), wrl.ipol.Nearest)
+        for k2, robj in rads_coord.items()] for k1 in rprods}
+    # compose the both radar-data based on the quality information
+    # calculated above
+    ires = 0.001
+    rcomps = {k1: wrl.comp.compose_weighted(
+        v1, [1. / (i + ires) for i in rd_quality_gridded])
+        for k1, v1 in rd_gridded.items()}
+    rcomps = {k1: np.ma.masked_invalid(v1) for k1, v1 in rcomps.items()}
+    rcomps = {k1: v1.reshape((len(cgrid_x), len(cgrid_y)))
+              for k1, v1 in rcomps.items()}
+    # TODO: add option to compose polarimetric moments, BH and MLH.
+    # =============================================================================
+    # Only valid when using radars operating at the same frequency/band
+    # =============================================================================
+    # FOR BEAM HEIGHT ONLY
+    # rd_quality_gridded2 = [wrl.comp.togrid(
+    #     robj, grid_coords, rd_qcatc[k1].georef['range [m]'].max()
+    #     + rd_qcatc[k1].georef['range [m]'][0], robj.mean(axis=0),
+    #     # pulse_volumes[k1], wrl.ipol.Idw)
+    #     pulse_volumes[k1], wrl.ipol.Nearest)
+    #     for k1, robj in rads_coord.items()]
+    # rd_gridded2 = [wrl.comp.togrid(
+    #     robj, grid_coords, rd_qcatc[k1].georef['range [m]'].max()
+    #     + rd_qcatc[k1].georef['range [m]'][0], robj.mean(axis=0),
+    #     rd_qcatc[k1].georef['beam_height [km]'][:, 0:].ravel(),
+    #     # rmlyr[k1].mlyr_limits['pcp_region [HC]'][:, 0:].ravel(),
+    #     # wrl.ipol.Idw) for k1, robj in rads_coord.items()]
+    #     wrl.ipol.Nearest) for k1, robj in rads_coord.items()]
+    # rcomp_ml = wrl.comp.compose_ko(
+    #     rd_gridded2, [1. / (i + ires) for i in rd_quality_gridded2])
+    # rcomp_ml = np.ma.masked_invalid(rcomp_ml)
+    # rcomp_ml = {'beam_height [km]':
+    #             rcomp_ml.reshape((len(cgrid_x), len(cgrid_y)))}
+    # rvars = ['ADP [dB/km]', 'AH [dB/km]', 'KDP [deg/km]',
+    #          'ZDR [dB]', 'ZH [dBZ]']
+    # rvfields = [{k1: v1 for k1, v1 in robj.vars.items() if k1 in rvars}
+    #             for cnt, robj in enumerate(rattc)]
+    # rd_gridded3 = {k1: [wrl.comp.togrid(
+    #     robj, grid_coords, rd_qcatc[cnt].georef['range [m]'].max()
+    #     + rd_qcatc[cnt].georef['range [m]'][0], robj.mean(axis=0),
+    #     rvfields[cnt][k1][:, 0:].ravel(), wrl.ipol.Nearest)
+    #     for cnt, robj in enumerate(rads_coord)] for k1 in rvars}
+    # rcomps_pv = {k1: wrl.comp.compose_weighted(
+    #     v1, [1. / (i + 0.001) for i in rd_quality_gridded])
+    #     for k1, v1 in rd_gridded3.items()}
+    # rcomps_pv = {k1: np.ma.masked_invalid(v1)
+    #              for k1, v1 in rcomps_pv.items()}
+    # rcomps_pv = {k1: v1.reshape((len(x), len(y)))
+    #              for k1, v1 in rcomps_pv.items()}
+    # [robj.z_to_r(rzhah[cnt].vars['ZH [dBZ]'], mlyr=rmlyr[cnt],
+    #              a=RPARAMS[k1]['rz_a'], b=RPARAMS[k1]['rz_b'],
+    #              beam_height=rd_qcatc[cnt].georef['beam_height [km]'])
+    #  if 'xpol' in robj.site_name.lower() else
+    #  robj.z_to_r(rattc[cnt].vars['ZH [dBZ]'], mlyr=rmlyr[cnt],
+    #              a=RPARAMS[k1]['rz_a'], b=RPARAMS[k1]['rz_b'],
+    #              beam_height=rd_qcatc[cnt].georef['beam_height [km]'])
+    #  for cnt, robj in enumerate(rqpe)]
+    rcomp_params = copy.copy(rd_qcatc[list(rd_qcatc)[0]].params)
+    dt_mean1 = [robj.scandatetime for k1, robj in rqpe.items()]
+    dt_mean = min(dt_mean1)+(max(dt_mean1)-min(dt_mean1))/2
+    rcomps['datetime'] = dt_mean
+    rcomps['elev_ang [deg]'] = {robj.site_name: robj.elev_angle
+                                for k1, robj in rqpe.items()}
+    rcomp_georef = {'grid_utmx': grid_coords[:, 0].reshape((len(cgrid_x),
+                                                            len(cgrid_y))),
+                    'grid_utmy': grid_coords[:, 1].reshape((len(cgrid_x),
+                                                            len(cgrid_y)))}
+    epsg_to_osr = 32632
+    wgs84 = wrl.georef.get_default_projection()
+    utm = wrl.georef.epsg_to_osr(epsg_to_osr)
+    rcomp_georef['grid_wgs84x'], rcomp_georef['grid_wgs84y'] = (
+        wrl.georef.reproject(rcomp_georef['grid_utmx'],
+                             rcomp_georef['grid_utmy'], src_crs=utm,
+                             trg_crs=wgs84))
+    toc2 = perf_counter()
+    print(f'TIME ELAPSED [Composite]: {dt.timedelta(seconds=toc2-tic)}')
+# %%
+if COMPOSITE:
+    # xlims, ylims = (6.6, 7.2), (50.6, 51.2)
+    ralg = 'r_ah'
+    ralg = 'r_ah_kdp'
+    ralg = 'r_kdpopt'
+    ralg = 'r_zopt'
+    # ralg = 'r_z'
+    # ralg = 'Beam height'
+    # rcomp_vars = rcomp_ml
+    # rcomp_vars = {'ZH [dBZ]': composite}
+    rcomp_vars = {'Rainfall [mm/h]': rcomps[ralg]}
+    rad_display.plot_ppi(
+        rcomp_georef, rcomp_params, rcomp_vars,  # var2plot='Rainfall [mm/h]',
+        cpy_feats={'status': True, 'tiles': True, 'alpha_rad': 0.9,
+                   'alpha_tiles': 1, 'tiles_source': 'OSM',
+                   'tiles_style': None},
+        proj_suffix='wgs84',
+        data_proj=ccrs.PlateCarree(), xlims=xlims, ylims=ylims,
+        fig_size=fig_size,
+        # ucmap='jet',
+        # ucmap='terrain',
+        # ucmap='gist_earth_r',
+        # vars_bounds={'Beam_height [km]': [0, 5, int(1+((5-0)/0.25))]},
+        vars_bounds={'Beam_height [km]': [0, 5, int(1+((5-0)/0.2))]},
+        fig_title=(f'Radar Composite [{ralg}]: '
+                   + f"{rcomp_params['datetime']:%Y-%m-%d %H:%M}"))
