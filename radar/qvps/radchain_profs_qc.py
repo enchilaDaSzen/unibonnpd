@@ -12,46 +12,43 @@ import numpy as np
 from tqdm import tqdm
 import towerpy as tp
 import os
-# import tad_phidp_offqvps as tpdp
-# from copy import deepcopy
 import datetime as dt
 from zoneinfo import ZoneInfo
-# from scipy import stats
-# from towerpy.utils import radutilities as rut
 import matplotlib.pyplot as plt
-# import twpext as tpx
 LWDIR = '/home/dsanchez/sciebo_dsr/'
 # LWDIR = '/home/enchiladaszen/Documents/sciebo/'
 sys.path.append(LWDIR + 'codes/github/unibonnpd/')
-from radar.rparams_dwdxpol import RPARAMS
+from radar.rparams_dwdxpol import RPARAMS as RPARAMSALL
 
 # =============================================================================
-# Define working directory and list files
+# %% Define date-time, radar features and working directories
 # =============================================================================
-# Boxpol, Juxpol, Essen, Flechtdorf, Neuheilenbach, Offenthal, Hannover
-RADAR_SITE = 'Offenthal'
-PTYPE = 'qvps'
+# DTWORK = dt.datetime(2017, 7, 24, 0, 0)  # 24hr [NO JXP]
+# DTWORK = dt.datetime(2017, 7, 25, 0, 0)  # 24hr [NO JXP]
+# DTWORK = dt.datetime(2018, 5, 16, 0, 0)  # 24hr []
+# DTWORK = dt.datetime(2018, 9, 23, 0, 0)  # 24 hr [NO JXP]
+# DTWORK = dt.datetime(2018, 12, 2, 0, 0)  # 24 hr [NO JXP]
+# DTWORK = dt.datetime(2019, 5, 8, 0, 0)  # 24 hr [NO JXP]
+# DTWORK = dt.datetime(2019, 7, 20, 0, 0)  # 16 hr [NO BXP][JXP8am]
+# DTWORK = dt.datetime(2020, 6, 17, 0, 0)  # 24 hr [NO BXP]
+# DTWORK = dt.datetime(2021, 7, 13, 0, 0)  # 24 hr []
+DTWORK = dt.datetime(2021, 7, 14, 0, 0)  # 24 hr [NO BXP]
 
-# DTWORK = dt.datetime(2016, 6, 4, 0, 0)
-# DTWORK = dt.datetime(2017, 7, 19, 0, 0)
-# DTWORK = dt.datetime(2017, 7, 24, 0, 0)
-# DTWORK = dt.datetime(2017, 7, 25, 0, 0)
-# DTWORK = dt.datetime(2018, 5, 16, 0, 0)
-# DTWORK = dt.datetime(2018, 9, 23, 0, 0)
-DTWORK = dt.datetime(2018, 12, 2, 0, 0)
-# DTWORK = dt.datetime(2019, 5, 8, 0, 0)
-# DTWORK = dt.datetime(2019, 5, 11, 0, 0)
-# DTWORK = dt.datetime(2019, 7, 20, 0, 0)
-# DTWORK = dt.datetime(2020, 6, 17, 0, 0)  # NO BXP
-# DTWORK = dt.datetime(2021, 7, 13, 0, 0)
-# DTWORK = dt.datetime(2021, 7, 14, 0, 0)
-# DTWORK = dt.datetime(2019, 5, 10, 0, 0)
-# DTWORK = dt.datetime(2019, 5, 11, 0, 0)
-# DTWORK = dt.datetime(2021, 6, 20, 0, 0)  # 24 hr
+# DTWORK = dt.datetime(2014, 10, 7, 0, 0)  # 24hr []
+# DTWORK = dt.datetime(2019, 5, 11, 0, 0)  # 24hr [NO JXP]
+# DTWORK = dt.datetime(2019, 5, 20, 0, 0)  # 24hr [NO JXP] LOR
+# DTWORK = dt.datetime(2020, 6, 13, 0, 0)  # 24 hr [NO BXP]
+# DTWORK = dt.datetime(2020, 6, 14, 0, 0)  # 24 hr [NO BXP]
+# DTWORK = dt.datetime(2021, 2, 6, 0, 0)  # 24 hr [NO BXP]
+# DTWORK = dt.datetime(2023, 12, 23, 0, 0)  # 24 hr [NO BXP]
 
 EWDIR = '/run/media/dsanchez/PSDD1TB/safe/bonn_postdoc/'
 # LWDIR = '/home/enchiladaszen/Documents/sciebo/'
 # EWDIR = '/media/enchiladaszen/PSDD1TB/safe/bonn_postdoc/'
+
+# Boxpol, Juxpol, Essen, Flechtdorf, Neuheilenbach, Offenthal, Hannover
+RADAR_SITE = 'Essen'
+PTYPE = 'qvps'
 
 if 'xpol' in RADAR_SITE:
     WDIR = (EWDIR + f'pd_rdres/{PTYPE}/xpol/')
@@ -62,22 +59,25 @@ PPFILES = [WDIR+i for i in sorted(os.listdir(WDIR))
            if i.endswith(f'_{PTYPE}.tpy') and RADAR_SITE in i
            and i.startswith(f"{DTWORK.strftime('%Y%m%d')}")]
 
+RPARAMS = {RADAR_SITE: next(item for item in RPARAMSALL
+                            if item['site_name'] == RADAR_SITE)}
+
+# %%
+SAVE_CDATA = False
+SAVE_PROFS = False
+
 extend_mlyr = False
 if extend_mlyr:
     appx = '_extmlyr'
 else:
     appx = ''
 
-RPARAMS = {RADAR_SITE: next(item for item in RPARAMS
-                            if item['site_name'] == RADAR_SITE)}
-
 RES_DIR = LWDIR + f"pd_rdres/qvps_d4calib{appx}/{DTWORK.strftime('%Y%m%d')}/"
 # RCFILES = [RES_DIR+i for i in sorted(os.listdir(RES_DIR))
 #            if i.endswith(f'_{PTYPE}.tpy') and RADAR_SITE in i]
 
-# %%
 # =============================================================================
-# Read radar profiles
+# %% Read radar profiles
 # =============================================================================
 with open(PPFILES[0], 'rb') as f:
     rprofs = pickle.load(f)
@@ -86,14 +86,14 @@ dtrs = [i.scandatetime for i in rprofs]
 PLOT_METHODS = False
 RESET = True
 
-# %%
 # =============================================================================
-# ZH Offset adjustment
+# %% ZH Offset adjustment
 # =============================================================================
-zh_oc = False
+zh_oc = True
 if zh_oc:
     if 'xpol' in RPARAMS[RADAR_SITE]['site_name']:
-        zh_off = RPARAMS[RADAR_SITE]['zh_offset'].get(DTWORK.strftime("%Y%m%d"))
+        zh_off = RPARAMS[RADAR_SITE]['zh_offset'].get(
+            DTWORK.strftime("%Y%m%d"))
         # zh_off = 0
     else:
         zh_off = 0
@@ -102,7 +102,7 @@ if zh_oc:
     print(f'{RADAR_SITE}_ZH_O [{zh_off:.2f} dBZ]')
 
 # =============================================================================
-# PhiDP SHIFTED SIGN ADJUSTMENT
+# %% PhiDP SHIFTED SIGN ADJUSTMENT
 # =============================================================================
 phidp_sign = False
 if phidp_sign:
@@ -112,14 +112,13 @@ if phidp_sign:
     else:
         rp.qvps['PhiDP [deg]'] *= 1
 
-# %%
 # =============================================================================
-# ML detection
+# %% ML detection
 # =============================================================================
 qvps_res = np.median(np.diff(rprofs[0].georef['profiles_height [km]']))
 
-mlid = {'minh': 1.5 if 'xpol' in RADAR_SITE else 1.,
-        'maxh': 3.5 if 'xpol' in RADAR_SITE else 3.25,
+mlid = {'minh': 1.5 if 'xpol' in RADAR_SITE else 1.5,
+        'maxh': 4.5 if 'xpol' in RADAR_SITE else 5,
         'kval': 0.08 if RADAR_SITE == 'Boxpol'
         else 0.08 if RADAR_SITE == 'Juxpol' else 0.08,
         'wval': 1/4 if RADAR_SITE == 'Boxpol' else 1/8
@@ -139,10 +138,10 @@ rmlyr = [tp.ml.mlyr.MeltingLayer(rd) for rd in rprofs]
                    phidp_peak=mlid['phidp'])
  for i, robj in enumerate(tqdm(rmlyr, desc='rmlyr_towerpy'))]
 
-print(f'QVPs resolution: {qvps_res:0.4f} [km]')
+print(f'QVPs vertical resolution: {qvps_res*1000:0.2f} [m]')
 ml_thk = [i.ml_thickness for i in rmlyr]
 mlid['ml_t'] = np.nanmean(ml_thk) + (0. if 'xpol' in RADAR_SITE else -0.)
-print(f"ML_THK: {mlid['ml_t']:.2f}")
+print(f"mean ML_THK: {mlid['ml_t']:.2f} [km]")
 
 iprof = 0
 iprof = 196
@@ -159,7 +158,7 @@ print(rprofs[iprof].scandatetime)
 #                      phidp_peak=mlid['phidp'], plot_method=True)
 
 # =============================================================================
-# Brief ML-PROCS and QC
+# %%% Brief ML-PROCS and QC
 # =============================================================================
 for cnt, i in enumerate(rmlyr):
     # Remove unrealistic MLyrs
@@ -213,8 +212,9 @@ if not RESET:
         i.ml_bottom = 2.124182400886521545321241784185 - a[c]
         i.thickness = i.ml_top - i.ml_bottom
 
-# %%
-
+# =============================================================================
+# %%% Applies a MAF to the ML
+# =============================================================================
 mov_avrgf_len = 5
 mlb_mavf = np.ma.convolve(tp.utils.radutilities.fillnan1d([i.ml_bottom
                                                            for i in rmlyr]),
@@ -258,13 +258,11 @@ for cnt, i in enumerate(rmlyr2):
             i.ml_top = np.nan
             i.ml_bottom = np.nan
             i.thickness = np.nan
+    # Add 75 m to the top and bottom heights of the MLYR
+    nbinshtb = float(np.round(75/(qvps_res*1000)))
     if ~np.isnan(rmlyr2[cnt].ml_top) and ~np.isnan(rmlyr2[cnt].ml_bottom):
-        i.ml_top += (qvps_res*0. if RADAR_SITE == 'Boxpol' else
-                     qvps_res*0. if RADAR_SITE == 'Juxpol' else
-                     (qvps_res*0. if DTWORK.year < 2021 else qvps_res*0.))
-        i.ml_bottom -= (qvps_res*0. if RADAR_SITE == 'Boxpol' else
-                        qvps_res*0. if RADAR_SITE == 'Juxpol' else
-                        (qvps_res*0. if DTWORK.year < 2021 else qvps_res*0.))
+        i.ml_top += qvps_res*nbinshtb
+        i.ml_bottom -= qvps_res*nbinshtb
     # Remove unrealistic MLyrs
     # if i.ml_thickness <= mlid['ml_t'] or i.ml_thickness >= 3:
     if i.ml_thickness <= 0.5:
@@ -298,17 +296,17 @@ if not RESET:
 
 
 ml_top = [i.ml_top for i in rmlyr2]
-print(f'ML_TOP (mean): {np.nanmean(ml_top):.2f}')
+print(f'ML_TOP (mean): {np.nanmean(ml_top):.2f} [km]')
 ml_btm = [i.ml_bottom for i in rmlyr2]
-print(f'ML_BTM (mean): {np.nanmean(ml_btm):.2f}')
+print(f'ML_BTM (mean): {np.nanmean(ml_btm):.2f} [km]')
 ml_thk = [i.ml_thickness for i in rmlyr2]
-print(f'ML_THK (mean): {np.nanmean(ml_thk):.2f}')
-# %%
+print(f'ML_THK (mean): {np.nanmean(ml_thk):.2f} [km]')
+
 # =============================================================================
-# Profile Classification
+# %% Profile Classification
 # =============================================================================
-min_h = (0.075 if 'xpol' in RADAR_SITE
-         else (0.07 if DTWORK.year < 2021 else .1))
+min_hkm = (0.075 if 'xpol' in RADAR_SITE
+           else (0.07 if DTWORK.year < 2021 else .1))
 rhohv_thr_r = (0.80 if 'xpol' in RADAR_SITE
                else (0.80 if DTWORK.year < 2021 else 0.80))
 rhohv_thr_p = (0.75 if 'xpol' in RADAR_SITE
@@ -317,9 +315,10 @@ zh_thr_lr = 0
 zh_thr_mr = 25
 zh_thr_hr = 35
 # zh_thr_mr = 30  # Too broad
-minbins_lr = (4 if 'xpol' in RADAR_SITE else (1 if DTWORK.year < 2021 else 4))
-minbins_mr = (5 if 'xpol' in RADAR_SITE else (2 if DTWORK.year < 2021 else 5))
-minbins_hr = (2 if 'xpol' in RADAR_SITE else (1 if DTWORK.year < 2021 else 2))
+minbins_lr = float(np.ceil(200/(qvps_res*1000)))
+minbins_mr = float(np.ceil(250/(qvps_res*1000)))
+minbins_hr = float(np.ceil(100/(qvps_res*1000)))
+
 for nprof, prf in enumerate(rprofs):
     # nprof = 217  # Use to evaluate a single profile
     # prf = rprofs[217]
@@ -327,17 +326,16 @@ for nprof, prf in enumerate(rprofs):
     mlt = rmlyr2[nprof].ml_top
     # Convective-Type (no MLYR)
     if np.isnan(rr):
-        # TODO: improve by checking rhoHV
         # Bins classification
-        prf_class = np.where((prf.georef['profiles_height [km]'] > min_h)
+        prf_class = np.where((prf.georef['profiles_height [km]'] > min_hkm)
                              & (prf.qvps['rhoHV [-]'] >= rhohv_thr_r)
                              & (prf.qvps['ZH [dBZ]'] >= zh_thr_lr), 1, 0)
         prf_class = np.where(
-            (prf.georef['profiles_height [km]'] > min_h)
+            (prf.georef['profiles_height [km]'] > min_hkm)
             & (prf.qvps['rhoHV [-]'] >= rhohv_thr_r)
             & (prf.qvps['ZH [dBZ]'] >= zh_thr_mr), 2, prf_class)
         prf_class = np.where(
-            (prf.georef['profiles_height [km]'] > min_h)
+            (prf.georef['profiles_height [km]'] > min_hkm)
             & (prf.qvps['rhoHV [-]'] >= rhohv_thr_r)
             & (prf.qvps['ZH [dBZ]'] >= zh_thr_hr), 3, prf_class)
         prf.qvps['bin_class [0-5]'] = np.zeros_like(
@@ -368,17 +366,17 @@ for nprof, prf in enumerate(rprofs):
         prf.qvps['prof_type [0-6]'][np.isnan(prf.qvps['ZH [dBZ]'])] = np.nan
     else:
         # Bins classification
-        prf_class = np.where((prf.georef['profiles_height [km]'] >= min_h)
+        prf_class = np.where((prf.georef['profiles_height [km]'] >= min_hkm)
                              & (prf.georef['profiles_height [km]'] <= rr)
                              & (prf.qvps['rhoHV [-]'] >= rhohv_thr_r)
                              & (prf.qvps['ZH [dBZ]'] >= zh_thr_lr),
                              1, 0)
-        prf_class = np.where((prf.georef['profiles_height [km]'] >= min_h)
+        prf_class = np.where((prf.georef['profiles_height [km]'] >= min_hkm)
                              & (prf.georef['profiles_height [km]'] <= rr)
                              & (prf.qvps['rhoHV [-]'] >= rhohv_thr_r)
                              & (prf.qvps['ZH [dBZ]'] >= zh_thr_mr),
                              2, prf_class)
-        prf_class = np.where((prf.georef['profiles_height [km]'] >= min_h)
+        prf_class = np.where((prf.georef['profiles_height [km]'] >= min_hkm)
                              & (prf.georef['profiles_height [km]'] <= rr)
                              & (prf.qvps['rhoHV [-]'] >= rhohv_thr_r)
                              & (prf.qvps['ZH [dBZ]'] >= zh_thr_hr),
@@ -422,32 +420,31 @@ for nprof, prf in enumerate(rprofs):
     prf.qvps.pop('class [0-1]', None)
 
 # %%
-min_h_zdr = (0.185 if 'xpol' in RADAR_SITE
-             else (0.17 if DTWORK.year < 2021 else .20))
-min_h_phidp = (0.175 if 'xpol' in RADAR_SITE
-               else (0.2 if DTWORK.year < 2021 else 0.5))
+min_hkm_zdr = (0.0185 if 'xpol' in RADAR_SITE
+               else (0.17 if DTWORK.year < 2021 else .1))
+min_hkm_phidp = (0.0175 if 'xpol' in RADAR_SITE
+                 else (0.2 if DTWORK.year < 2021 else 0.2))
 zh_thr_lr = (20 if 'xpol' in RADAR_SITE
              else (25 if DTWORK.year < 2021 else 20))
 # rhv_min = 0.985 if 'xpol' in RADAR_SITE else 0.95  # 0.95 old res 0.975
 rhv_min = (0.985 if 'xpol' in RADAR_SITE
            else (0.97 if DTWORK.year < 2021 else 0.985))
-min_bins = (6 if 'xpol' in RADAR_SITE
-            else (2 if DTWORK.year < 2021 else 6))
+# min_binsO = float(np.ceil(250/(qvps_res*1000)))
+min_binsO = float(np.ceil(200/(qvps_res*1000)))
 maf_offset = True
+
 # =============================================================================
-# ZDR offset detection
+# %% ZDR offset detection
 # =============================================================================
 roffzdr = [tp.calib.calib_zdr.ZDR_Calibration(rd) for rd in rprofs]
 [robj.offsetdetection_qvps(pol_profs=rprofs[i], mlyr=rmlyr2[i],
-                           min_h=min_h_zdr, zhmax=zh_thr_lr, rhvmin=rhv_min,
-                           minbins=min_bins)
+                           min_h=min_hkm_zdr, zhmax=zh_thr_lr, rhvmin=rhv_min,
+                           minbins=min_binsO)
  for i, robj in enumerate(tqdm(roffzdr, desc='roffzdry_towerpy'))]
 
 # zdro = np.array([robj.zdr_offset for i, robj in enumerate(roffzdr)])
 
-# =============================================================================
-# ZDR OFFSET QC
-# =============================================================================
+# %%% ZDR OFFSET QC
 zdro = np.array([i.zdr_offset for i in roffzdr], dtype=float)
 zdro[zdro == 0] = np.nan
 if np.isnan(zdro[0]) and not np.isnan(zdro).all():
@@ -469,20 +466,17 @@ if not RESET:
 for cnt, robj in enumerate(roffzdr):
     robj.zdr_offset = zdro[cnt]
 
-# %%
 # =============================================================================
-# PhiDP offset detection
+# %% PhiDP offset detection
 # =============================================================================
-# roffpdp = [tpdp.PhiDP_Calibration(rd) for rd in rprofs]
 roffpdp = [tp.calib.calib_phidp.PhiDP_Calibration(rd) for rd in rprofs]
 [robj.offsetdetection_qvps(
-    pol_profs=rprofs[i], mlyr=rmlyr2[i], min_h=min_h_phidp, zhmax=zh_thr_lr,
-    rhvmin=rhv_min, minbins=min_bins)
+    pol_profs=rprofs[i], mlyr=rmlyr2[i], min_h=min_hkm_phidp, zhmax=zh_thr_lr,
+    rhvmin=rhv_min, minbins=min_binsO)
  for i, robj in enumerate(tqdm(roffpdp, desc='rcalphidpx_towerpy'))]
 
-# =============================================================================
-# PHIDP OFFSET QC
-# =============================================================================
+
+# %%% PHIDP OFFSET QC
 phidpo = np.array([i.phidp_offset for i in roffpdp], dtype=float)
 # phidpo[:84] = np.nan
 phidpo[phidpo == 0] = np.nan
@@ -504,11 +498,10 @@ for cnt, robj in enumerate(roffpdp):
     robj.phidp_offset = phidpo[cnt]
     # robj.phidp_sign = phidpsign[cnt]
 
-
-# %%
+# =============================================================================
+# %% Offsets adjustment
 # =============================================================================
 # ZDR bias adjustment
-# =============================================================================
 zdr_oc = True
 zdro = np.array([i.zdr_offset for i in roffzdr])
 
@@ -516,17 +509,15 @@ if zdr_oc:
     for cnt, rp in enumerate(rprofs):
         rp.qvps['ZDR [dB]'] -= zdro[cnt]
 
-# =============================================================================
 # PhiDP bias adjustment
-# =============================================================================
-phidp_oc = True
+phidp_oc = False
 phidpo = np.array([i.phidp_offset for i in roffpdp])
 if phidp_oc:
     for cnt, rp in enumerate(rprofs):
         rp.qvps['PhiDP [deg]'] -= phidpo[cnt]
 
 # =============================================================================
-# Adjust relative height
+# %% Adjust relative height
 # =============================================================================
 adjh = False
 if adjh:
@@ -543,7 +534,9 @@ if adjh:
     for pr in rprofs:
         pr.georef['profiles_height [km]'] += RSITESH[RADAR_SITE]/1000
 
-# %%
+# =============================================================================
+# %% Data visualisation
+# =============================================================================
 tz = 'Europe/Berlin'
 htixlim = None
 htixlim = [
@@ -552,22 +545,22 @@ htixlim = [
 # dtm1 = [i.replace(tzinfo=None) for i in dtrs]
 
 v2p = 'ZH [dBZ]'
-# v2p = 'ZDR [dB]'
-# v2p = 'rhoHV [-]'
-# v2p = 'bin_class [0-5]'
+v2p = 'ZDR [dB]'
+v2p = 'rhoHV [-]'
+v2p = 'bin_class [0-5]'
 # v2p = 'prof_type [0-6]'
-# v2p='PhiDP [deg]'
+# v2p = 'PhiDP [deg]'
 
 pbins_class = {'no_rain': 0.5, 'light_rain': 1.5, 'modrt_rain': 2.5,
                'heavy_rain': 3.5, 'mixed_pcpn': 4.5, 'solid_pcpn': 5.5}
 prof_type = {'NR': 0.5, 'LR [STR]': 1.5, 'MR [STR]': 2.5, 'HR [STR]': 3.5,
              'LR [CNV]': 4.5, 'MR [CNV]': 5.5, 'HR [CNV]': 6.5}
 
-
 if v2p == 'bin_class [0-5]':
     ptype = 'pseudo'
     ucmap = 'tpylsc_rad_model'
     cbticks = pbins_class
+    contourl = 'ZH [dBZ]'
 elif v2p == 'prof_type [0-6]':
     ptype = 'pseudo'
     ucmap = 'coolwarm'
@@ -575,25 +568,21 @@ elif v2p == 'prof_type [0-6]':
     ucmap = 'terrain'
     # ucmap = 'cividis'
     cbticks = prof_type
+    contourl = 'ZH [dBZ]'
 else:
     ptype = 'fcontour'
     # ptype = 'pseudo'
     ucmap = None
     cbticks = None
+    contourl = None
 
-radb = tp.datavis.rad_interactive.hti_base(rprofs, mlyrs=rmlyr2,
-                                           # stats='std_dev',
-                                           var2plot=v2p,
-                                           vars_bounds={'bin_class [0-5]':
-                                                        (0, 6, 7),
-                                                        'prof_type [0-6]':
-                                                        (0, 7, 8)},
-                                           # ptype=ptype, ucmap=ucmap,
-                                           htiylim=[0, 12], htixlim=htixlim,
-                                           cbticks=cbticks,
-                                           # contourl='rhoHV [-]',
-                                           # contourl='ZH [dBZ]',
-                                           tz=tz, fig_size=(19.2, 11.4))
+radb = tp.datavis.rad_interactive.hti_base(
+    rprofs, mlyrs=rmlyr2, var2plot=v2p,  # stats='std_dev',
+    vars_bounds={'bin_class [0-5]': (0, 6, 7),
+                 'prof_type [0-6]': (0, 7, 8),
+                 },
+    ptype=ptype, ucmap=ucmap, htiylim=[0, 12], htixlim=htixlim,
+    cbticks=cbticks, contourl='ZH [dBZ]', tz=tz, fig_size=(19.2, 11.4))
 radexpvis = tp.datavis.rad_interactive.HTI_Int()
 radb.on_clicked(radexpvis.hzfunc)
 plt.tight_layout()
@@ -639,12 +628,30 @@ fnamedt = (rprofs[0].scandatetime.strftime("%Y%m%d%H%M_") +
 # fnamedt = (DTWORK.strftime("%Y%m%d%H%M_") +
 #            rprofs[-1].scandatetime.strftime("%Y%m%d%H%M_"))
 
-# # Save ML, offsets, etc
-# with open(RES_DIR+fnamedt+RADAR_SITE+f'_qc_{elvp:.0f}{PTYPE}.tpy',
-#           'wb') as f:
-#     pickle.dump(profs_cal, f, pickle.HIGHEST_PROTOCOL)
+# Save ML, offsets, etc
+if SAVE_CDATA:
+    fname_cdata = RES_DIR+fnamedt+RADAR_SITE+f'_qc_{elvp:.0f}{PTYPE}.tpy'
+    if not os.path.exists(RES_DIR):
+        print('Dir was created')
+        os.makedirs(RES_DIR, exist_ok=True)
+    if os.path.isfile(fname_cdata):
+        ovw = input("CDFile exists, proceed ([y]/n)??")
+        if ovw == 'y':
+            with open(fname_cdata, 'wb') as f:
+                pickle.dump(profs_cal, f, pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(fname_cdata, 'wb') as f:
+            pickle.dump(profs_cal, f, pickle.HIGHEST_PROTOCOL)
 
 # # Save QC-profiles
-# with open(WDIR+f'qc{appx}/'+fnamedt+RADAR_SITE+f'{elvp:.0f}_qc_qvps.tpy',
-#           'wb') as f:
-#     pickle.dump(rprofs, f, pickle.HIGHEST_PROTOCOL)
+if SAVE_PROFS:
+    fname_qcprofs = (WDIR + f'qc{appx}/' + fnamedt + RADAR_SITE
+                     + f'{elvp:.0f}_qc_qvps.tpy')
+    if os.path.isfile(fname_qcprofs):
+        ovw = input("PROFSFile exists, proceed ([y]/n)??")
+        if ovw == 'y':
+            with open(fname_qcprofs, 'wb') as f:
+                pickle.dump(rprofs, f, pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(fname_qcprofs, 'wb') as f:
+            pickle.dump(rprofs, f, pickle.HIGHEST_PROTOCOL)

@@ -17,7 +17,7 @@ import matplotlib.patches as mplptc
 from mpl_toolkits.axes_grid1 import ImageGrid
 
 # =============================================================================
-# Define working directory, time and list files
+# %% Define working directory, time and list files
 # =============================================================================
 LWDIR = '/home/dsanchez/sciebo_dsr/'
 EWDIR = '/run/media/dsanchez/PSDD1TB/safe/bonn_postdoc/'
@@ -48,7 +48,7 @@ rprods = sorted(rprods_dp[1:] + rprods_hbr + rprods_opt + rprods_hyop
 SAVE_FIGS = True
 SAVE_DATA = True
 
-RES_DIR = LWDIR + f"pd_rdres/qpe_all/rcomp_qpe_dwd_dwdxpol/"
+RES_DIR = LWDIR + f"pd_rdres/qpe_all/{rcomp}/"
 
 rprodsltx = {'r_adp': '$R(A_{DP})$', 'r_ah': '$R(A_{H})$',
              'r_kdp': '$R(K_{DP})$', 'r_z': '$R(Z_H)$',
@@ -71,9 +71,8 @@ rprodsltx = {'r_adp': '$R(A_{DP})$', 'r_ah': '$R(A_{H})$',
 rprodsltx['r_kdpo'] = '$R(K_{DP})[OV]$'
 rprodsltx['r_zo'] = '$R(Z_{H})[OA]$'
 
-# %%
 # =============================================================================
-# Read in Radar QPE
+# %% Read in Radar QPE
 # =============================================================================
 qpe_amlb = False
 if qpe_amlb:
@@ -110,9 +109,8 @@ for k1, rp in eval_rng.items():
 fres = {}
 fres['altitude [m]'] = np.hstack([i['altitude [m]'] for i in daccum])
 
-# %%
 # =============================================================================
-# Read in Radar QPE2
+# %% Read in Radar QPE2
 # =============================================================================
 RQPEH_DIR2 = (LWDIR + f'pd_rdres/qpe_all/{rcomp2}/')
 RQPEH_FILES2 = [RQPEH_DIR2 + i for i in sorted(os.listdir(RQPEH_DIR2))
@@ -138,7 +136,9 @@ for k1, rp in eval_rng2.items():
 fres2 = {}
 fres2['altitude [m]'] = np.hstack([i['altitude [m]'] for i in daccum2])
 
-# %%
+# =============================================================================
+# %% Scatter plot
+# =============================================================================
 cmaph = mpl.colormaps['gist_earth_r']
 cmaph = mpl.colormaps['terrain']
 cmaph = mpl.colormaps['berlin']
@@ -248,7 +248,9 @@ if SAVE_FIGS:
     fname = (f"devents{len(daccum)}_{rcomp}_accum_24h.png")
     plt.savefig(RES_DIR + fname, format='png')
 
-# %%
+# =============================================================================
+# %% Stats plots
+# =============================================================================
 
 theta = np.linspace(0.0, 2 * np.pi, len(qpe_stats), endpoint=False)
 theta2 = np.linspace(0.0, 2 * np.pi, len(qpe_stats), endpoint=True)
@@ -479,6 +481,3 @@ if SAVE_FIGS:
         fnst = stat2plot
     fname = (f"devents{len(daccum)}_{rcomp}_{fnst}_24h.png")
     plt.savefig(RES_DIR + fname, format='png')
-
-# %%
-

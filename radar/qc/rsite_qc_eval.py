@@ -22,7 +22,7 @@ from radar.rparams_dwdxpol import RPARAMS
 from tqdm import tqdm
 
 # =============================================================================
-# Define working directory, and date-time
+# %% Define working directory, and date-time
 # =============================================================================
 START_TIME = dt.datetime(2017, 7, 24, 0, 0)  # 24h [NO JXP]
 # START_TIME = dt.datetime(2017, 7, 25, 0, 0)  # 24h [NO JXP]
@@ -49,7 +49,7 @@ EWDIR = '/run/media/dsanchez/PSDD1TB/safe/bonn_postdoc/'
 # EWDIR = '/media/enchiladaszen/enchiladasz/safe/bonn_postdoc/'
 
 # =============================================================================
-# Define radar site
+# %% Define radar site
 # =============================================================================
 # Choose only one site at a time
 # Boxpol, Juxpol, Essen, Flechtdorf, Neuheilenbach, Offenthal
@@ -57,7 +57,7 @@ RSITE = 'Essen'
 RPARAMS = [next(item for item in RPARAMS if item['site_name'] == RSITE)]
 
 # =============================================================================
-# Read-in QVPs data
+# %% Read-in QVPs data
 # =============================================================================
 data4calib = 'qvps'
 DIRPROFSCAL = (LWDIR + 'pd_rdres/qvps_d4calib/'
@@ -89,9 +89,8 @@ xlims, ylims = [4.15, 11.], [48.55, 52.75]  # DWDXPOL RADCOV
 
 RES_DIR = LWDIR + f"pd_rdres/qpe_{START_TIME.strftime('%Y%m%d')}/rsite_qpe/"
 
-# %%
 # =============================================================================
-# List QC radar data
+# %% List QC radar data
 # =============================================================================
 suffix = ''  # _wrongbeta
 QCRD_DIR = {rs['site_name']:
@@ -117,9 +116,8 @@ RDQC_FILES = {k1: [QCRD_DIR[k1]+RDQC_FILES[k1][i] if ~np.isnan(i)
 
 RDQC_FILES = RDQC_FILES[RPARAMS[0]['site_name']]
 
-# %%
 # =============================================================================
-# Set QPE parameters
+# %% Set QPE parameters
 # =============================================================================
 temp = 15
 z_thld = 40
@@ -189,7 +187,7 @@ kdpzh_zdrisc = kdpzh_zdr3_a*kdpzh_zdrii**kdpzh_zdr3_b
 # KDP mean (Rhyzkov)
 kdpmean_ii = kdpmean_a * tpuc.xdb2x(zhkdpii) ** kdpmean_b
 
-# %%
+# %% QC Loop
 adp_all = []
 ah_all = []
 kdpa_all = []
@@ -275,9 +273,8 @@ zha_all = np.vstack(zha_all)
 zhp_all = np.vstack(zhp_all)
 zdr_all = np.vstack(zdr_all)
 
-# %%
 # =============================================================================
-# Plot
+# %% Plot results
 # =============================================================================
 lblsize = 18
 tcksize = 14

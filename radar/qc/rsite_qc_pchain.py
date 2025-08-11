@@ -22,7 +22,7 @@ from radar.rparams_dwdxpol import RPARAMS
 from radar import twpext as tpx
 
 # =============================================================================
-# Define working directory, and date-time
+# %% Define working directory, and date-time
 # =============================================================================
 # START_TIME = dt.datetime(2017, 7, 24, 0, 0)  # 24hr [NO JXP]
 # START_TIME = dt.datetime(2017, 7, 25, 0, 0)  # 24hr [NO JXP]
@@ -50,7 +50,7 @@ MFS_DIR = (LWDIR + 'codes/github/unibonnpd/radar/nme/xpol_mfs/')
 CLM_DIR = (LWDIR + 'codes/github/unibonnpd/radar/nme/xpol_clm/')
 
 # =============================================================================
-# Define radar site
+# %% Define radar site
 # =============================================================================
 # Choose only one site at a time
 # Boxpol, Juxpol, Essen, Flechtdorf, Neuheilenbach, Offenthal
@@ -58,7 +58,7 @@ RSITE = 'Offenthal'
 RPARAMS = {RSITE: next(item for item in RPARAMS if item['site_name'] == RSITE)}
 
 # =============================================================================
-# Read-in QVPs data
+# %% Read-in QVPs data
 # =============================================================================
 RCAL_FILES = {RSITE: DIRPROFSCAL+n for n in sorted(os.listdir(DIRPROFSCAL))
               if data4calib in n and RPARAMS[RSITE]['site_name'] in n}
@@ -74,7 +74,7 @@ phidpOv = [i for i in profs_data['phidpO'] if ~np.isnan(i.phidp_offset)]
 zdrOv = [i for i in profs_data['zdrO'] if ~np.isnan(i.zdr_offset)]
 
 # =============================================================================
-# List PPI radar data
+# %% List PPI radar data
 # =============================================================================
 RSITE_FILES = {k: tpx.get_listfilesxpol(i['site_name'], START_TIME, STOP_TIME,
                                         i['elev'], parent_dir=PDIR)
@@ -88,7 +88,7 @@ RES_DIR = (EWDIR + f"pd_rdres/{START_TIME.strftime('%Y%m%d')}/"
            + f"rsite_qc/{RPARAMS[RSITE]['site_name']}/")
 
 # =============================================================================
-# Set parameters related to QC
+# %% Set parameters related to QC
 # =============================================================================
 if mlb_avg > 1.5:
     temp = 15
@@ -117,11 +117,13 @@ preset_nlvl = RPARAMS[RSITE]['nlvl'].get(START_TIME.strftime("%Y%m%d"))
 # preset_nlvl = (29-5, 33-5, 0.1)
 
 # =============================================================================
-# Set plotting parameters
+# %% Set plotting parameters
 # =============================================================================
 PLOT_METHODS = False
 
-# %%
+# =============================================================================
+# %% Processing chain loop
+# =============================================================================
 # scan = RSITE_FILES[RSITE][211]
 # scan = RSITE_FILES[RSITE][144]
 # scan = RSITE_FILES[RSITE][0]

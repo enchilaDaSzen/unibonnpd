@@ -39,16 +39,68 @@ from matplotlib.patches import Rectangle
 import csv
 
 
-test_pckgs = {'towerpy': '1.0.7', 'wradlib': '2.4.0', 'scipy': '1.15.1',
-              'cartopy': '0.24.0', 'scikit-learn': '1.6.1', 'numpy': '1.26.4',
-              'python': '3.10.12',  'matplotlib': '3.9.1'}
+test_pckgs = {'towerpy': '1.0.8', 'wradlib': '2.4.0', 'scipy': '1.15.2',
+              'cartopy': '0.24.0', 'scikit-learn': '1.6.1', 'numpy': '2.2.6',
+              'python': '3.10.12',  'matplotlib': '3.10.3'}
 latest_update = dt.datetime(2025, 1, 31, 17, 0)
 print_rtimes = False
 
 
 # =============================================================================
-# utils
+# %% Utils
 # =============================================================================
+def unibonncmap():
+    """
+    UB colormap and norm.
+
+    Returns
+    -------
+    cmap_prabhakar : TYPE
+        DESCRIPTION.
+
+    """
+    colors_prabhakar = np.array([[0.00, 1.00, 1.00],
+                                 [0.00, 0.70, 0.93],
+                                 [0.00, 0.00, 1.00],
+                                 [0.50, 1.00, 0.00],
+                                 [0.40, 0.80, 0.00],
+                                 [0.27, 0.55, 0.00],
+                                 [1.00, 1.00, 0.00],
+                                 [0.80, 0.80, 0.00],
+                                 [1.00, 0.65, 0.00],
+                                 [1.00, 0.27, 0.00],
+                                 [0.80, 0.22, 0.00],
+                                 [0.55, 0.15, 0.00],
+                                 [1.00, 0.00, 1.00],
+                                 [0.58, 0.44, 0.86]])
+
+    cmap_prabhakar = mpl.colors.ListedColormap(colors_prabhakar)
+    bnd = {}
+    bnd['KDP [deg/km]'] = np.array([-0.5, -0.25, 0., 0.05, 0.1, 0.2, 0.3, 0.45,
+                                    0.6, 0.8, 1, 2, 3])
+    bnd['ZDR [dB]'] = np.array([-1, -0.5, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
+                                0.8, 1, 2, 3])
+    bnd['ZH [dBZ]'] = np.arange(-10, 55, 5)
+    bnd['ZH+ [dBZ]'] = np.arange(-10, 55, 5)
+    bnd['ZHa [dBZ]'] = np.arange(-10, 55, 5)
+    bnd['rhoHV [-]'] = np.array([0.7, 0.8, 0.85, 0.9, 0.92, 0.94, 0.95, 0.96,
+                                 0.97, 0.98, 0.99, 0.995, 0.998])
+    unorm = {}
+    unorm['KDP [deg/km]'] = mpc.BoundaryNorm(
+        bnd['KDP [deg/km]'], cmap_prabhakar.N, extend='both')
+    unorm['ZDR [dB]'] = mpc.BoundaryNorm(
+        bnd['ZDR [dB]'], cmap_prabhakar.N, extend='both')
+    unorm['ZH [dBZ]'] = mpc.BoundaryNorm(
+        bnd['ZH [dBZ]'], cmap_prabhakar.N, extend='both')
+    unorm['ZH+ [dBZ]'] = mpc.BoundaryNorm(
+        bnd['ZH+ [dBZ]'], cmap_prabhakar.N, extend='both')
+    unorm['rhoHV [-]'] = mpc.BoundaryNorm(
+        bnd['rhoHV [-]'], cmap_prabhakar.N, extend='both')
+    unorm['ZHa [dBZ]'] = mpc.BoundaryNorm(
+        bnd['ZHa [dBZ]'], cmap_prabhakar.N, extend='both')
+    return cmap_prabhakar, unorm
+
+
 def bbox(*args):
     """Get bounding box from a set of bin coordinates."""
     x = np.array([])
@@ -426,7 +478,7 @@ def heatmap(data, row_labels, col_labels, ax=None,
 def annotate_heatmap(im, data=None, valfmt="{x:.2f}", valnan='n/a',
                      threshold=None, textcolors=("white", "black"), **textkw):
     """
-    A function to annotate a heatmap.
+    Annotate a heatmap.
 
     Parameters
     ----------
@@ -453,19 +505,16 @@ def annotate_heatmap(im, data=None, valfmt="{x:.2f}", valnan='n/a',
 
     if not isinstance(data, (list, np.ndarray)):
         data = im.get_array()
-
     # Normalize the threshold to the images color range.
     if threshold is not None:
         threshold = im.norm(threshold)
     else:
         threshold = im.norm(data.max())/2.
-
     # Set default alignment to center, but allow it to be
     # overwritten by textkw.
     kw = dict(horizontalalignment="center",
               verticalalignment="center")
     kw.update(textkw)
-
     # # Wrap string format into Formatter
     # if isinstance(valfmt, str):
     #     user_fmt = valfmt  # Store string for use in safe_format
@@ -493,7 +542,6 @@ def annotate_heatmap(im, data=None, valfmt="{x:.2f}", valnan='n/a',
                 return valnan
         valfmt = mticker.FuncFormatter(safe_format)
     elif isinstance(valfmt, mticker.Formatter):
-
         def safe_format(x, pos):
             if np.ma.is_masked(x) or np.isnan(x):
                 return valnan
@@ -502,7 +550,6 @@ def annotate_heatmap(im, data=None, valfmt="{x:.2f}", valnan='n/a',
             except Exception:
                 return valnan
         valfmt = mticker.FuncFormatter(safe_format)
-
     # Loop over the data and create a `Text` for each "pixel".
     # Change the text's color depending on the data.
     texts = []
@@ -514,8 +561,9 @@ def annotate_heatmap(im, data=None, valfmt="{x:.2f}", valnan='n/a',
 
     return texts
 
+
 # =============================================================================
-# io
+# %% io
 # =============================================================================
 def get_listfilesxpol(radar_site, start_time, stop_time, scan_elev=None,
                       parent_dir=None, working_dir=None):
@@ -2646,13 +2694,12 @@ class RainGauge:
 
 
 # =============================================================================
-# QPE
+# %% QPE
 # =============================================================================
 
 
-
 # =============================================================================
-# calib
+# %% Calib
 # =============================================================================
 class rhoHV_Noise_Bias:
     r"""

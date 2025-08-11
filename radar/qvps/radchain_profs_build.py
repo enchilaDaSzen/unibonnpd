@@ -18,34 +18,33 @@ from wradlib.dp import phidp_kdp_vulpiani as kdpvpi
 LWDIR = '/home/dsanchez/sciebo_dsr/'
 # LWDIR = '/home/enchiladaszen/Documents/sciebo/'
 sys.path.append(LWDIR + 'codes/github/unibonnpd/')
-from radar.rparams_dwdxpol import RPARAMS
+from radar.rparams_dwdxpol import RPARAMS as RPARAMSALL
 from radar import twpext as tpx
 
 
 # =============================================================================
-# Define working directory, and date-time
+# %% Define date-time and working directories
 # =============================================================================
 # START_TIME = dt.datetime(2017, 7, 24, 0, 0)  # 24hr [NO JXP]
 # START_TIME = dt.datetime(2017, 7, 25, 0, 0)  # 24hr [NO JXP]
 # START_TIME = dt.datetime(2018, 5, 16, 0, 0)  # 24hr []
 # START_TIME = dt.datetime(2018, 9, 23, 0, 0)  # 24 hr [NO JXP]
-START_TIME = dt.datetime(2018, 12, 2, 0, 0)  # 24 hr [NO JXP]
+# START_TIME = dt.datetime(2018, 12, 2, 0, 0)  # 24 hr [NO JXP]
 # START_TIME = dt.datetime(2019, 5, 8, 0, 0)  # 24 hr [NO JXP]
+# START_TIME = dt.datetime(2019, 7, 20, 0, 0)  # 16 hr [NO BXP][JXP8am]
+# START_TIME = dt.datetime(2020, 6, 17, 0, 0)  # 24 hr [NO BXP]
+# START_TIME = dt.datetime(2021, 7, 13, 0, 0)  # 24 hr []
+START_TIME = dt.datetime(2021, 7, 14, 0, 0)  # 24 hr [NO BXP]
+
+# START_TIME = dt.datetime(2014, 10, 7, 0, 0)  # 24hr []
 # START_TIME = dt.datetime(2019, 5, 11, 0, 0)  # 24hr [NO JXP]
 # START_TIME = dt.datetime(2019, 5, 20, 0, 0)  # 24hr [NO JXP] LOR
-# START_TIME = dt.datetime(2019, 7, 20, 0, 0)  # 16 hr [NO BXP][JXP8am]
 # START_TIME = dt.datetime(2020, 6, 13, 0, 0)  # 24 hr [NO BXP]
 # START_TIME = dt.datetime(2020, 6, 14, 0, 0)  # 24 hr [NO BXP]
-# START_TIME = dt.datetime(2020, 6, 17, 0, 0)  # 24 hr [NO BXP]
 # START_TIME = dt.datetime(2021, 2, 6, 0, 0)  # 24 hr [NO BXP]
-# START_TIME = dt.datetime(2021, 7, 13, 0, 0)  # 24 hr []
-# START_TIME = dt.datetime(2021, 7, 14, 0, 0)  # 24 hr [NO BXP]
-START_TIME = dt.datetime(2023, 12, 23, 0, 0)  # 24 hr [NO BXP]
+# START_TIME = dt.datetime(2023, 12, 23, 0, 0)  # 24 hr [NO BXP]
 
 STOP_TIME = START_TIME+dt.timedelta(hours=24)
-
-PTYPE = 'qvps'
-FULL_QC = False
 
 EWDIR = '/run/media/dsanchez/PSDD1TB/safe/bonn_postdoc/'
 PDIR = None
@@ -53,12 +52,13 @@ PDIR = None
 # PDIR = '/media/enchiladaszen/Samsung1TB/safe/radar_datasets/dwd_xpol/'
 
 # =============================================================================
-# Define radar site
+# %% Define radar site and features and list files
 # =============================================================================
 # Choose only one site at a time
 # Boxpol, Juxpol, Essen, Flechtdorf, Neuheilenbach, Offenthal
-RSITE = 'Dresden'
-RPARAMS = {RSITE: next(item for item in RPARAMS if item['site_name'] == RSITE)}
+RSITE = 'Boxpol'
+RPARAMS = {RSITE: next(item for item in RPARAMSALL
+                       if item['site_name'] == RSITE)}
 for k1, v1 in RPARAMS.items():
     if k1.lower() == 'boxpol':
         v1['elev'] = 'n_ppi_110deg'
@@ -67,9 +67,10 @@ for k1, v1 in RPARAMS.items():
     else:
         v1['elev'] = 'ppi_vol_12.0'
 
-# =============================================================================
-# List PPI radar data
-# =============================================================================
+PTYPE = 'qvps'
+FULL_QC = True
+SAVE_PROFS = True
+
 RSITE_FILES = {k: tpx.get_listfilesxpol(i['site_name'], START_TIME, STOP_TIME,
                                         i['elev'], parent_dir=PDIR)
                if 'xpol' in i['site_name'].lower() else
@@ -77,14 +78,21 @@ RSITE_FILES = {k: tpx.get_listfilesxpol(i['site_name'], START_TIME, STOP_TIME,
                                     i['elev'], parent_dir=PDIR)
                for k, i in RPARAMS.items()}
 
-# Set directory to save results
+# =============================================================================
+# %% Set directory to save results
+# =============================================================================
 if 'xpol' in RSITE:
     RES_DIR = (EWDIR + f'pd_rdres/{PTYPE}/xpol/')
 else:
     RES_DIR = (EWDIR + f'pd_rdres/{PTYPE}/dwd/')
 
 # =============================================================================
-# ZH offset
+# %% Set plotting parameters
+# =============================================================================
+PLOT_METHODS = False
+
+# =============================================================================
+# %% Radar reflectivity $(Z_H)$ offset definition
 # =============================================================================
 if 'xpol' in RPARAMS[RSITE]['site_name']:
     # zh_off = RPARAMS[RSITE]['zh_offset'].get(START_TIME.strftime("%Y%m%d"))
@@ -93,21 +101,19 @@ else:
     zh_off = 0
 
 # =============================================================================
-# PhiDP(0)
+# %% Differential phase $(\Phi_{DP})$ offset defintion
 # =============================================================================
 if RPARAMS[RSITE]['site_name'] == 'Juxpol' and START_TIME.year > 2018:
     RPARAMS[RSITE]['signpdp'] = -1
 else:
     RPARAMS[RSITE]['signpdp'] = 1
-if (RPARAMS[RSITE]['site_name'] == 'Boxpol'
-        and RPARAMS[RSITE]['elev'] != 'n_ppi_010deg'):
-    RPARAMS[RSITE]['bclass'] -= 64
+
 preset_phidp = RPARAMS[RSITE]['phidp_prst'].get(START_TIME.strftime("%Y%m%d"))
 if not preset_phidp:
     print('PRESET_PHIDP MISSING')
 
 # =============================================================================
-# Noise-level
+# %% Noise-level preset values definition
 # =============================================================================
 # if START_TIME.year >= 2021:
 #     rhohv_theo, preset_nlvl = (0.95, 1.), (32, 35, 0.01)  # 12 deg
@@ -115,8 +121,12 @@ if not preset_phidp:
 #     rhohv_theo, preset_nlvl = (0.95, 1.), (28, 33, 0.01)  # 12 deg
 if RPARAMS[RSITE]['site_name'] == 'Boxpol':
     RPARAMS[RSITE]['nlvl'] = (23, 27, .05)
+    if START_TIME.year < 2017:
+        RPARAMS[RSITE]['nlvl'] = (25, 29, .05)  # 2014
 elif RPARAMS[RSITE]['site_name'] == 'Juxpol':
     RPARAMS[RSITE]['nlvl'] = (28.5, 31, 0.05)
+    if START_TIME.year < 2017:
+        RPARAMS[RSITE]['nlvl'] = (31, 35, 0.05)
 elif 'xpol' not in RPARAMS[RSITE]['site_name'] and START_TIME.year >= 2021:
     RPARAMS[RSITE]['nlvl'] = (32, 35, 0.01)  # 12 deg
     RPARAMS[RSITE]['rhvtc'] = (0.95, 1.)  # 12 deg
@@ -124,6 +134,9 @@ elif 'xpol' not in RPARAMS[RSITE]['site_name'] and START_TIME.year < 2021:
     RPARAMS[RSITE]['nlvl'] = (28, 33, 0.01)  # 12 deg
     RPARAMS[RSITE]['rhvtc'] = (0.95, 1.)  # 12 deg
 
+# =============================================================================
+# %% Read MLyr and calibration parameters
+# =============================================================================
 if FULL_QC:
     if 'xpol' in RSITE:
         RES_DIR = (EWDIR + f'pd_rdres/{PTYPE}/xpol/fqc/')
@@ -146,37 +159,28 @@ if FULL_QC:
     mlb_avg = np.nanmean([i.ml_bottom for i in profs_data['mlyr']])
     phidpOv = [i for i in profs_data['phidpO'] if ~np.isnan(i.phidp_offset)]
     zdrOv = [i for i in profs_data['zdrO'] if ~np.isnan(i.zdr_offset)]
-
-    # =============================================================================
     # Set parameters related to QC
-    # =============================================================================
     if mlb_avg > 1.5:
         temp = 5
         temp = 15
     else:
         temp = 15
     max_diffdtmin = 120
+    if (RPARAMS[RSITE]['site_name'] == 'Boxpol'
+            and RPARAMS[RSITE]['elev'] != 'n_ppi_010deg'):
+        RPARAMS[RSITE]['bclass'] -= 64
 
 # =============================================================================
-# Set plotting parameters
+# %% Build QVPs
 # =============================================================================
-PLOT_METHODS = False
-
-# %%
 rprofs_all = []
-
-# rscan = RSITE_FILES[RSITE][211]
-# rscan = RSITE_FILES[RSITE][144]
-# rscan = RSITE_FILES[RSITE][31]
-
-# %%
 
 for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                   + f" [{START_TIME.strftime('%Y%m%d')}]"):
     rdata = tpx.Rad_scan(rscan, RPARAMS[RSITE]['site_name'])
     try:
         # =====================================================================
-        # Import data into towerpy using wradlib
+        # %%% Import data into towerpy using wradlib
         # =====================================================================
         if rdata.site_name.lower() == 'boxpol':
             rdata.ppi_xpol()
@@ -189,25 +193,20 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                                                rdata.vars)
         rband = RPARAMS[RSITE]['rband']
         # =============================================================================
-        # ZH offset correction
+        # %%% Radar reflectivity $(Z_H)$ offset correction
         # =============================================================================
         rdata.vars['ZH [dBZ]'] += zh_off
         rdata.zh_offset = zh_off
         # =============================================================================
-        # rhoHV noise-correction
+        # %%% Correlation coefficient $(\rho_{HV})$ noise-correction
         # =============================================================================
         rcrho = tpx.rhoHV_Noise_Bias(rdata)
         rcrho.iterate_radcst(
             rdata.georef, rdata.params, rdata.vars, data2correct=rdata.vars,
             noise_lvl=RPARAMS[RSITE]['nlvl'],
             rhohv_theo=RPARAMS[RSITE]['rhvtc'])
-        if PLOT_METHODS:
-            tp.datavis.rad_display.plot_ppidiff(
-                rdata.georef, rdata.params, rdata.vars, rcrho.vars,
-                var2plot1='rhoHV [-]', var2plot2='rhoHV [-]',
-                ucmap_diff='tpylsc_div_dbu_rd', diff_lims=[-0.5, 0.5, .1])
         # =============================================================================
-        # Noise suppression
+        # %%% Noise suppression
         # =============================================================================
         if rdata.params['radar constant [dB]'] <= 0:
             min_snr = -rcrho.rhohv_corrs['Noise level [dB]']
@@ -219,22 +218,20 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
             rdata.georef, rdata.params, rcrho.vars,
             min_snr=min_snr,
             data2correct=rcrho.vars, plot_method=PLOT_METHODS)
-        if PLOT_METHODS:
-            tp.datavis.rad_display.plot_setppi(rdata.georef, rdata.params,
-                                               rsnr.vars)
         # =============================================================================
-        # PhiDP offset correction
+        # %%% Differential phase $(\Phi_{DP})$ quality control and processing
         # =============================================================================
+        ropdp = tp.calib.calib_phidp.PhiDP_Calibration(rdata)
         # Modify the PhiDP sign (only for JXP)
         rsnr.vars['PhiDP [deg]'] *= RPARAMS[RSITE]['signpdp']
-        ropdp = tp.calib.calib_phidp.PhiDP_Calibration(rdata)
+        # $\Phi_{DP}(0)$ detection and correction
         ropdp.offsetdetection_ppi(rsnr.vars, preset=preset_phidp)
         ropdp.offset_correction(rsnr.vars['PhiDP [deg]'],
                                 phidp_offset=ropdp.phidp_offset,
                                 data2correct=rsnr.vars)
         if FULL_QC:
             # =============================================================================
-            # Allocate closest dataset from QVPs (for ML, offsets, etc)
+            # %%% Allocate closest dataset from QVPs (for ML, offsets, etc)
             # =============================================================================
             if mlyrhv:
                 idx_mlh, mlh_dt = min(zip(range(
@@ -259,7 +256,7 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                 key=lambda x: (x[1] > rdata.scandatetime,
                                abs(x[1] - rdata.scandatetime)))
             # =============================================================================
-            # PhiDP unfolding
+            # %%% $\Phi_{DP}$ unfolding
             # =============================================================================
             ropdp.phidp_offset_qvps = phidpOv[idx_phidp0].phidp_offset
             uphidp = np.ascontiguousarray(
@@ -276,23 +273,14 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                                                 ropdp.vars,
                                                 var2plot='PhiDP [deg]')
             # =============================================================================
-            # Clutter ID and removal
+            # %%% Non-meteorological echoes identification and removal
             # =============================================================================
             if rdata.site_name.lower() == 'boxpol':
                 pathmfscl = MFS_DIR
-                if rdata.scandatetime.year == 2017:
-                    clfmap = np.loadtxt(
-                        CLM_DIR + f'boxpol{rdata.scandatetime.year}b'
-                        + '_cluttermap_el0.dat')
-                else:
-                    clfmap = np.loadtxt(
-                        CLM_DIR + f'boxpol{rdata.scandatetime.year}'
-                        + '_cluttermap_el0.dat')
+                clfmap = None
             elif rdata.site_name.lower() == 'juxpol':
                 pathmfscl = None
-                clfmap = np.loadtxt(CLM_DIR
-                                    + 'juxpol2021_cluttermap_el0.dat')
-                # clfmap = None
+                clfmap = None
             else:
                 pathmfscl = None
                 rdata2 = tpx.Rad_scan(rscan, RPARAMS[RSITE]['site_name'])
@@ -304,21 +292,21 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                 clfmap = np.nan_to_num(clfmap, nan=1e-5)
 
             rnme = tp.eclass.nme.NME_ID(rdata)
-            # Despeckle and removal of linear signatures
+            # %%%% Despeckle and removal of linear signatures
             rnme.lsinterference_filter(rdata.georef, rdata.params, ropdp.vars,
                                        rhv_min=RPARAMS[RSITE]['rhvmin'],
                                        data2correct=ropdp.vars,
                                        plot_method=PLOT_METHODS)
-            # rnme.clutter_id(rdata.georef, rdata.params, rnme.vars,
-            #                 path_mfs=pathmfscl, min_snr=rsnr.min_snr,
-            #                 binary_class=RPARAMS[RSITE]['bclass'],
-            #                 clmap=clfmap, data2correct=rnme.vars,
-            #                 plot_method=PLOT_METHODS)
+            rnme.clutter_id(rdata.georef, rdata.params, rnme.vars,
+                            path_mfs=pathmfscl, min_snr=rsnr.min_snr,
+                            binary_class=0,
+                            clmap=clfmap, data2correct=rnme.vars,
+                            plot_method=PLOT_METHODS)
             if PLOT_METHODS:
                 tp.datavis.rad_display.plot_setppi(rdata.georef, rdata.params,
                                                    rnme.vars)
             # ============================================================================
-            # Melting layer allocation
+            # %%% Melting layer allocation
             # ============================================================================
             rmlyr = tp.ml.mlyr.MeltingLayer(rdata)
             if ((abs((mlh_dt - rmlyr.scandatetime).total_seconds())/60)
@@ -347,7 +335,7 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                 tp.datavis.rad_display.plot_setppi(rdata.georef, rdata.params,
                                                    rnme.vars, mlyr=rmlyr)
             # =====================================================================
-            # ZDR offset correction
+            # %%% Differential reflectivity $(Z_{DR})$ offset correction
             # =============================================================================
             rozdr = tp.calib.calib_zdr.ZDR_Calibration(rdata)
             if ((abs((zdr0_dt - rozdr.scandatetime).total_seconds())/60)
@@ -367,7 +355,7 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                                                 rozdr.vars,
                                                 var2plot='ZDR [dB]')
             # =============================================================================
-            # ZH Attenuation Correction
+            # %%% Radar reflectivity $(Z_H)$ attenuation correction
             # =============================================================================
             rattc = tp.attc.attc_zhzdr.AttenuationCorrection(rdata)
             if ((abs((pclass_dt - rattc.scandatetime).total_seconds())/60)
@@ -402,7 +390,7 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                 rb_a = 0.14  # Tropical
                 # att_alpha = [0.15, 0.35, 0.22]  # Light - heavy rain
                 # print(f'scan HR-{rband}-{att_alpha}')
-            # Processing of PhiDP for attenuation correction
+            # %%%% $\Phi_{DP}$  processing for attenuation correction
             rattc.attc_phidp_prepro(
                 rdata.georef, rdata.params, rozdr.vars, rhohv_min=0.7,
                 phidp0_correction=(True if (rattc.site_name == 'Offenthal')
@@ -416,12 +404,13 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                 tp.datavis.rad_display.plot_ppi(rdata.georef, rdata.params,
                                                 rattc.vars,
                                                 var2plot='PhiDP [deg]')
+            # %%%% $Z_{H}$ attenuation correction
             if ('xpol' in rattc.site_name.lower()
                or rattc.site_name.lower() == 'aachen'):
                 rattc.zh_correction(
                     rdata.georef, rdata.params, rattc.vars,
-                    # rnme.nme_classif['classif [EC]'], mlyr=rmlyr,
-                    rnme.ls_dsp_class['classif [EC]'], mlyr=rmlyr,
+                    rnme.nme_classif['classif [EC]'], mlyr=rmlyr,
+                    # rnme.ls_dsp_class['classif [EC]'], mlyr=rmlyr,
                     attc_method='ABRI', pdp_dmin=1, pdp_pxavr_azm=3,
                     pdp_pxavr_rng=round(4000/rdata.params['gateres [m]']),
                     phidp0=0, coeff_alpha=att_alpha,
@@ -433,8 +422,8 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
             else:
                 rattc.zh_correction(
                     rdata.georef, rdata.params, rattc.vars,
-                    # rnme.nme_classif['classif [EC]'], mlyr=rmlyr,
-                    rnme.ls_dsp_class['classif [EC]'], mlyr=rmlyr,
+                    rnme.nme_classif['classif [EC]'], mlyr=rmlyr,
+                    # rnme.ls_dsp_class['classif [EC]'], mlyr=rmlyr,
                     attc_method='ABRI', pdp_dmin=1, pdp_pxavr_azm=3,
                     pdp_pxavr_rng=round(4000/rdata.params['gateres [m]']),
                     phidp0=0, coeff_alpha=att_alpha,
@@ -444,7 +433,7 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                     coeff_b=[0.73, 0.85, 0.78],  # MRR+Diederich
                     plot_method=PLOT_METHODS)
             # =============================================================================
-            # PBBc and ZHAH
+            # %%% Computation of $Z_H(A_H)$ (for PBB, wet radome and miscalibration)
             # =============================================================================
             rzhah = tp.attc.r_att_refl.Attn_Refl_Relation(rdata)
             rzhah.ah_zh(rattc.vars, zh_upper_lim=55, temp=temp, rband=rband,
@@ -468,7 +457,7 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                     rdata.georef, rdata.params, rattc.vars, rattc.vars,
                     var2plot1='ZH [dBZ]', var2plot2='ZH+ [dBZ]')
             # =============================================================================
-            # ZDR Attenuation Correction
+            # %%% $Z_{DR}$ attenuation correction
             # =============================================================================
             zhzdr_a = 0.000249173
             zhzdr_b = 2.33327
@@ -477,8 +466,8 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
             else:
                 zdr_attc = (7, 10, 5)
             rattc.zdr_correction(rdata.georef, rdata.params, rozdr.vars,
-                                 # rzhah.vars, rnme.nme_classif['classif [EC]'],
-                                 rzhah.vars, rnme.ls_dsp_class['classif [EC]'],
+                                 rzhah.vars, rnme.nme_classif['classif [EC]'],
+                                 # rzhah.vars, rnme.ls_dsp_class['classif [EC]'],
                                  mlyr=rmlyr, attc_method='BRI',
                                  coeff_beta=RPARAMS[RSITE]['beta'],
                                  beta_alpha_ratio=rb_a,
@@ -490,7 +479,7 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                                           'coeff_b': zhzdr_b},
                                  plot_method=PLOT_METHODS)
             # =============================================================================
-            # KDP Derivation
+            # %%% Specific differential phase $(K_{DP})$ calculation
             # =============================================================================
             # KDP Vulpiani
             if rband == 'C':
@@ -505,8 +494,8 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
             rkdpv['KDP [deg/km]'] = kdp_vulp[1]
             # Remove NME
             rattc.vars['KDP* [deg/km]'] = np.where(
-                # rnme.nme_classif['classif [EC]'] != 0, np.nan,
-                rnme.ls_dsp_class['classif [EC]'] != 0, np.nan,
+                rnme.nme_classif['classif [EC]'] != 0, np.nan,
+                # rnme.ls_dsp_class['classif [EC]'] != 0, np.nan,
                 rkdpv['KDP [deg/km]'])
             # Remove negative KDP values in rain region and within ZH threshold
             rattc.vars['KDP* [deg/km]'] = np.where(
@@ -527,7 +516,7 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
                     diff_lims=[-1, 1, 0.1],
                     vars_bounds={'KDP [deg/km]': (-1, 3, 17)})
         # =============================================================================
-        # Create a new Towerpy object to store processed data
+        # %%% Create a new Towerpy object to store processed data
         # =============================================================================
         # rd_qc4ps = tp.attc.attc_zhzdr.AttenuationCorrection(rdata)
         rd_qc4ps = tp.calib.calib_phidp.PhiDP_Calibration(rdata)
@@ -558,7 +547,7 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
             rd_qc4ps.vars['ZHa [dBZ]'] = rattc.vars['ZH [dBZ]']
             rd_qc4ps.vars['ZH+ [dBZ]'] = rattc.vars['ZH+ [dBZ]']
         # =============================================================================
-        # Polarimetric profiles
+        # %%% Create polarimetric profiles object
         # =============================================================================
         rprofs = tp.profs.polprofs.PolarimetricProfiles(rd_qc4ps)
         rprofs.pol_qvps(rdata.georef, rdata.params, rd_qc4ps.vars, stats=True)
@@ -577,17 +566,21 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
             f'{dt.datetime.now().strftime("%Y-%m-%d--%H:%M:%S:")}'
             + f'Error in {rdata.file_name}- {err}'+'\n')
         pass
-# %%
 
+# =============================================================================
+# %% Plot polarimetric profiles from one time-step
+# =============================================================================
 # tp.datavis.rad_display.plot_radprofiles(
 #     rprofs_all[0], rprofs_all[0].georef['profiles_height [km]'], colours=False,
 #     stats='std_dev')
 
-# %%
+# =============================================================================
+# %% Height-versus-time plot of QVPs
+# =============================================================================
 # radb = tp.datavis.rad_interactive.hti_base(
 #     rprofs_all, stats='std_dev',
-#     # var2plot='ZDR [dB]',
-#     var2plot='rhoHV [-]',
+#     var2plot='ZDR [dB]',
+#     # var2plot='rhoHV [-]',
 #     # var2plot='PhiDP [deg]',
 #     # var2plot='KDP [deg/km]',
 #     # var2plot='ZH+ [dBZ]',
@@ -607,9 +600,8 @@ for rscan in tqdm(RSITE_FILES[RSITE], desc=f'Building QVPs from {RSITE}'
 # radexpvis = tp.datavis.rad_interactive.HTI_Int()
 # radb.on_clicked(radexpvis.hzfunc)
 
-# %%
 # =============================================================================
-# Write the data objects into a file
+# %% Write the data objects into a file
 # =============================================================================
 fnamedt = (START_TIME.strftime("%Y%m%d%H%M_") +
            STOP_TIME.strftime("%Y%m%d%H%M_"))
@@ -619,6 +611,15 @@ if FULL_QC:
 else:
     sffx = 'qvps'
 
-# with open(RES_DIR+fnamedt+RSITE+f'{rdata.elev_angle:.0f}_{sffx}.tpy',
-#           'wb') as f:
-#     pickle.dump(rprofs_all, f, pickle.HIGHEST_PROTOCOL)
+# # Save QC-profiles
+if SAVE_PROFS:
+    fname_qcprofs = (RES_DIR + fnamedt + RSITE
+                     + f'{rdata.elev_angle:.0f}_{sffx}.tpy')
+    if os.path.isfile(fname_qcprofs):
+        ovw = input("PROFSFile exists, proceed ([y]/n)??")
+        if ovw == 'y':
+            with open(fname_qcprofs, 'wb') as f:
+                pickle.dump(rprofs_all, f, pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(fname_qcprofs, 'wb') as f:
+            pickle.dump(rprofs_all, f, pickle.HIGHEST_PROTOCOL)

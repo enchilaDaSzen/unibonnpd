@@ -11,19 +11,19 @@ import numpy as np
 import towerpy as tp
 import wradlib as wrl
 from tqdm import tqdm
-import copy
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-from towerpy.utils.radutilities import find_nearest
-from towerpy.base import TowerpyError
-import twpext as tpx
+# import copy
+# import matplotlib as mpl
+# import matplotlib.pyplot as plt
+# from towerpy.utils.radutilities import find_nearest
+# from towerpy.base import TowerpyError
+from radar import twpext as tpx
 
 # =============================================================================
 # Define working directory and list files
 # =============================================================================
 START_TIME = dt.datetime(2021, 7, 14, 6, 16)
 START_TIME = dt.datetime(2021, 7, 14, 12, 50)
-START_TIME = dt.datetime(2017, 7, 24, 5, 16)
+# START_TIME = dt.datetime(2017, 7, 24, 5, 16)
 STOP_TIME = START_TIME+dt.timedelta(minutes=5)
 
 data4calib = 'qvps'

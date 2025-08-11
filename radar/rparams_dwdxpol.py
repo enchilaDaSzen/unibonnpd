@@ -7,8 +7,9 @@ Created on Mon May  6 15:58:11 2024
 """
 
 # =============================================================================
-# PARAMETERS FOR X-BAND
+# %% Parameters for x-band
 # =============================================================================
+
 # RQPE
 rz_ax, rz_bx = 72, 2.14  # Diederich2015
 rkdp_ax, rkdp_bx = 16.9, 0.801  # Diederich2015
@@ -21,8 +22,9 @@ rkdp_ax, rkdp_bx = 16.9, 0.801  # Diederich2015
 rz_hailax, rz_hailbx = (1/0.035)**(1/0.52), 1/0.52  # Chen2023
 rzhzdr_ax, rzhzdr_bx, rzhzdr_cx = 0.0039, 1.07, -5.97  # Bringi2001
 rkdpzdr_ax, rkdpzdr_bx, rkdpzdr_cx = 28.6, 0.95, -1.37  # Bringi2001
-# =============================================================================
-# RADAR VARIABLES RELATIONS AND QC
+
+# %%% Radar variables relations and qc
+
 # att_alphax = [0.14, 0.41, 0.28]  # Park2005
 att_betax = [0.03, 0.06, 0.05]
 alphabetar_x = 0.19  # Ryzhkov2014
@@ -43,9 +45,29 @@ rhohv_minx = 0.6  # Min value of RhohV used to remove interference and LS
 rhvzdrattc_bxp = 0.98  # RhohV threshold for rain, BoXPol
 rhvzdrattc_jxp = 0.95  # RhohV threshold for rain, JuXPol
 
+# %%% Scan elevation angles
+
+scnelevsx = {'bxp': ['n_vertical_scan', 'n_ppi_280deg', 'n_ppi_180deg',
+                     'n_ppi_140deg', 'n_ppi_110deg', 'n_ppi_082deg',
+                     'n_ppi_060deg', 'n_ppi_045deg', 'n_ppi_031deg',
+                     'n_ppi_020deg', 'n_ppi_010deg'],
+             'jxp': {'el_280': 'sweep_0', 'el_180': 'sweep_1',
+                     'el_140': 'sweep_2', 'el_110': 'sweep_3',
+                     'el_82': 'sweep_4', 'el_60': 'sweep_5',
+                     'el_45': 'sweep_6', 'el_31': 'sweep_7',
+                     'el_17': 'sweep_8', 'el_06': 'sweep_9',
+                     'Vert': 'sweep_0'},
+             'axp': {'el_450': 'sweep_8', 'el_250': 'sweep_7',
+                     'el_124': 'sweep_6', 'el_105': 'sweep_5',
+                     'el_086': 'sweep_0', 'el_067': 'sweep_1',
+                     'el_048': 'sweep_2', 'el_029': 'sweep_3',
+                     'el_010': 'sweep_4'}
+             }
+
 # =============================================================================
-# PARAMETERS FOR C-BAND
+# %% Parameters for c-band
 # =============================================================================
+
 dwd_sites = {'ASR Borkum': 'asb', 'Boostedt': 'boo', 'Dresden': 'drs',
              'Eisberg': 'eis', 'Essen': 'ess', 'Feldberg': 'fbg',
              'Flechtdorf': 'fld', 'Hannover': 'hnr', 'Isen': 'isn',
@@ -67,8 +89,9 @@ rzhzdr_ac, rzhzdr_bc, rzhzdr_cc = 0.0058, 0.91, -2.09  # Bringi2001
 rkdpzdr_ac, rkdpzdr_bc, rkdpzdr_cc = 37.9, 0.89, -0.72  # Bringi2001
 # rz_ac, rz_bc = 256, 1.42  # DWD
 # rz_ac, rz_bc = (1/0.029)**(1/0.67), 1/0.67  # Borowska2011
-# =============================================================================
-# RADAR VARIABLES RELATIONS AND QC
+
+# %%% Radar variables relations and qc
+
 # att_alphac = [0.05, 0.18, 0.1]  # Troemel2014
 # att_betac = [0.002, 0.07, 0.04]
 # att_betac = [0.015, 0.07, 0.04]
@@ -89,15 +112,22 @@ rhohv_minc = 0.3
 rhvzdrattc_c = 0.98
 # Offenthal -> CLID 2021: 143, 2017:207
 
+# %%% Scan elevation angles
+scnelevsc = {'ppi_vol_5.5': '00', 'ppi_vol_4.5': '01', 'ppi_vol_3.5': '02',
+             'ppi_vol_2.5': '03', 'ppi_vol_1.5': '04', 'ppi_vol_0.5': '05',
+             'ppi_vol_8.0': '06', 'ppi_vol_12.0': '07', 'ppi_vol_17.0': '08',
+             'ppi_vol_25.0': '09', 'ppi_vrt_90g': '00', 'ppi_pcp': '00'}
+
 # =============================================================================
-# DEFAULT PARAMS
+# %% Default params
 # =============================================================================
 # Working dates
 workdt = ['20170724', '20170725', '20180516', '20180923', '20181202',
           '20190508', '20190511', '20190720', '20200614', '20200617',
           '20210525', '20210620', '20210629', '20210713', '20210714']
-# =============================================================================
-# ZH OFFSET
+
+# %%% ZH offset
+
 zhO = {'bxp': {'20170724': 0.5, '20170725': 0.5,
                '20180516': -1.85, '20180923': -1.85, '20181202': -1.85,
                '20190508': -2.75, '20190511': -2.75, '20190720': -2.75,
@@ -115,8 +145,10 @@ zhO = {'bxp': {'20170724': 0.5, '20170725': 0.5,
 zhOdmmy = {dwdrs: {wdt: 0 for wdt in workdt} for dwdrs in dwd_sites.values()
            if dwdrs not in zhO}
 zhO = zhO | zhOdmmy
-# =============================================================================
-# PHIDP OFFSET PRESET
+
+
+# %%% PHIDP offset preset
+
 pdpO = {'bxp': {wdt: 84 for wdt in workdt},
         'jxp': {wdt: 117 for wdt in workdt},
         'axp': {wdt: 0 for wdt in workdt},
@@ -148,8 +180,9 @@ pdpO = {'bxp': {wdt: 84 for wdt in workdt},
 pdpOdmmy = {dwdrs: {'20170724': None} for dwdrs in dwd_sites.values()
             if dwdrs not in pdpO}
 pdpO = pdpO | pdpOdmmy
-# =============================================================================
-# NOISE LEVEL PRESET
+
+# %%% Noise level preset
+
 cdwd_defaultnl = (36, 42, 0.1)
 nlvl = {'bxp': (24, 29, 0.1),
         'jxp': (29, 33, 0.1),
@@ -157,8 +190,10 @@ nlvl = {'bxp': (24, 29, 0.1),
 nlvldmmy = {dwdrs: cdwd_defaultnl for dwdrs in dwd_sites.values()
             if dwdrs not in nlvl}
 nlvl = nlvl | nlvldmmy
-# =============================================================================
-# MELTING LAYER HEIGHTS (DEFAULT)
+
+
+# %%% Melting layer heights
+
 mlvl = {'bxp': 3.0, 'jxp': 3.0, 'axp': 3.0}  # 2018/2019/20210714
 mlvldmmy = {dwdrs: 2.0 for dwdrs in dwd_sites.values() if dwdrs not in mlvl}
 mlvl = mlvl | mlvldmmy
@@ -169,10 +204,12 @@ mlyr_thkdmmy = {dwdrs: 0.8 for dwdrs in dwd_sites.values()
 mlyr_thk = mlyr_thk | mlyr_thkdmmy
 
 # =============================================================================
-# Definition dict
+# %% Definition dict
 # =============================================================================
+
 RPARAMS = [
     {'site_name': 'Boxpol', 'rband': 'X', 'elev': 'n_ppi_020deg',
+     'scns': scnelevsx['bxp'],
      'rhvtc': rhvtbxp, 'signvel': -1, 'signpdp': 1, 'bclass': 205,
      'zdr_offset': 0., 'zh_offset': zhO['bxp'], 'phidp_prst': pdpO['bxp'],
      'mlt': mlvl['bxp'], 'mlk': mlyr_thk['bxp'],
@@ -189,6 +226,7 @@ RPARAMS = [
      'zdrzh_a': zdrzh_ax, 'zdrzh_b': zdrzh_bx,
      'adpkdp_a': adpkdp_ax, 'adpkdp_b': adpkdp_bx},
     {'site_name': 'Juxpol', 'rband': 'X', 'elev': 'sweep_9',
+     'scns': scnelevsx['jxp'],
      'rhvtc': rhvtjxp, 'signvel': -1, 'signpdp': 1,  'bclass': 143,
      'zdr_offset': 1.5, 'zh_offset': zhO['jxp'], 'phidp_prst': pdpO['jxp'],
      'mlk': mlyr_thk['jxp'], 'mlt': mlvl['jxp'],
@@ -204,6 +242,7 @@ RPARAMS = [
      'ahkdp_a': ahkdp_ax, 'ahkdp_b': ahkdp_bx, 'zdrzh_a': zdrzh_ax,
      'zdrzh_b': zdrzh_bx, 'adpkdp_a': adpkdp_ax, 'adpkdp_b': adpkdp_bx},
     {'site_name': 'Aaxpol', 'rband': 'X', 'elev': 'sweep_4',
+     'scns': scnelevsx['axp'],
      'rhvtc': rhvtaxp, 'signvel': -1, 'signpdp': 1,  'bclass': 23,
      'zdr_offset': 1.5, 'zh_offset': zhO['axp'], 'phidp_prst': pdpO['axp'],
      'mlk': mlyr_thk['axp'], 'mlt': mlvl['axp'],
@@ -221,7 +260,7 @@ RPARAMS = [
     ]
 
 rparamsdmmy = [
-    {'site_name': dwdrsk, 'rband': 'C', 'elev': dflt_selevc,
+    {'site_name': dwdrsk, 'rband': 'C', 'elev': dflt_selevc, 'scns': scnelevsc,
      'rhvtc': rhvtc, 'signvel': 1, 'signpdp': 1, 'bclass': 207,
      'zdr_offset': 0, 'phidp_prst': pdpO.get(dwdrsv), 'zh_offset': 0,
      'mlk': mlyr_thk.get(dwdrsv), 'mlt': mlvl.get(dwdrsv),
@@ -238,6 +277,8 @@ rparamsdmmy = [
     for dwdrsk, dwdrsv in dwd_sites.items() if dwdrsv not in RPARAMS]
 
 RPARAMS = RPARAMS + rparamsdmmy
+
+# %% Rainfall product names for LaTeX
 
 RPRODSLTX = {'r_adp': '$R(A_{DP})$',
              'r_ah': '$R(A_{H})$',

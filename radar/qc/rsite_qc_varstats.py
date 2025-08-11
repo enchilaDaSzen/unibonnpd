@@ -24,7 +24,7 @@ import matplotlib.colors as mpc
 from tqdm import tqdm
 
 # =============================================================================
-# Define working directory, and date-time
+# %% Define working directory, and date-time
 # =============================================================================
 
 LWDIR = '/home/dsanchez/sciebo_dsr/'
@@ -34,7 +34,7 @@ EWDIR = '/run/media/dsanchez/PSDD1TB/safe/bonn_postdoc/'
 # EWDIR = '/media/enchiladaszen/enchiladasz/safe/bonn_postdoc/'
 
 # =============================================================================
-# Define radar site
+# %% Define radar site
 # =============================================================================
 # Choose only one site at a time
 # Boxpol, Juxpol, Essen, Flechtdorf, Neuheilenbach, Offenthal
@@ -42,7 +42,7 @@ EWDIR = '/run/media/dsanchez/PSDD1TB/safe/bonn_postdoc/'
 # RSITES = ['Essen']
 
 # =============================================================================
-# Set plotting parameters
+# %% Set plotting parameters
 # =============================================================================
 SAVE_FIGS = False
 fig_size = (13, 7)
@@ -60,7 +60,7 @@ else:
     appxf = '_amlb'
 
 # =============================================================================
-# Define date-time
+# %% Define date-time
 # =============================================================================
 START_TIMES = [dt.datetime(2017, 7, 24, 0, 0),  # 24h [NO JXP]
                dt.datetime(2017, 7, 25, 0, 0),  # 24h [NO JXP]
@@ -76,7 +76,9 @@ START_TIMES = [dt.datetime(2017, 7, 24, 0, 0),  # 24h [NO JXP]
 
 STOP_TIMES = [i+dt.timedelta(hours=24) for i in START_TIMES]
 
-# %%
+# =============================================================================
+# %% Compute radar variables stats
+# =============================================================================
 
 DMODE = 'read'
 DSAVE = False
@@ -177,7 +179,10 @@ if DMODE == 'compute':
 if DMODE == 'read':
     with open(f'{DDIR}rvars_statsdaily.tpy', 'rb') as f:
         rvars_statsdaily = pickle.load(f)
-# %%
+
+# =============================================================================
+# %% Plot results
+# =============================================================================
 
 RSITES = ['Boxpol', 'Juxpol', 'Essen', 'Flechtdorf', 'Neuheilenbach',
           'Offenthal']

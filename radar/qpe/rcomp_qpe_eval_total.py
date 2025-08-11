@@ -16,7 +16,7 @@ import matplotlib.colors as mpc
 from mpl_toolkits.axes_grid1 import ImageGrid
 
 # =============================================================================
-# Define working directory, time and list files
+# %% Define working directory, time and list files
 # =============================================================================
 LWDIR = '/home/dsanchez/sciebo_dsr/'
 EWDIR = '/run/media/dsanchez/PSDD1TB/safe/bonn_postdoc/'
@@ -70,11 +70,8 @@ rprodsltx = {'r_adp': '$R(A_{DP})$', 'r_ah': '$R(A_{H})$',
 rprodsltx['r_kdpo'] = '$R(K_{DP})[OV]$'
 rprodsltx['r_zo'] = '$R(Z_{H})[OA]$'
 
-
-
-# %%
 # =============================================================================
-# Read in Radar QPE
+# %% Read in Radar QPE
 # =============================================================================
 qpe_amlb = False
 if qpe_amlb:
@@ -110,7 +107,10 @@ for k1, rp in eval_rng.items():
     eval_rng[k1] = np.hstack(rp)
 fres = {}
 fres['altitude [m]'] = np.hstack([i['altitude [m]'] for i in daccum])
-# %%
+
+# =============================================================================
+# %% Scatter plot
+# =============================================================================
 cmaph = mpl.colormaps['gist_earth_r']
 cmaph = mpl.colormaps['Spectral_r']
 # lpv = {'Altitude [m]':
@@ -206,7 +206,9 @@ if SAVE_FIGS:
     fname = (f"devents{len(daccum)}_{rcomp}_accum_24h.png")
     plt.savefig(RES_DIR + fname, format='png')
 
-# %%
+# =============================================================================
+# %% Stats plots
+# =============================================================================
 
 theta = np.linspace(0.0, 2 * np.pi, len(qpe_stats), endpoint=False)
 theta2 = np.linspace(0.0, 2 * np.pi, len(qpe_stats), endpoint=True)
